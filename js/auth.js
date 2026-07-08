@@ -1,5 +1,5 @@
-import { getSupabaseClient } from "./database.js?v=0.3.2";
-import { CONFIG, readableError } from "./utilities.js?v=0.3.2";
+import { getSupabaseClient } from "./database.js?v=0.3.3";
+import { CONFIG, readableError } from "./utilities.js?v=0.3.3";
 
 const roleCodes = [
   ["administrator", "Administrator"],
@@ -14,7 +14,7 @@ export async function signInWithMicrosoft() {
   const { error } = await supabase.auth.signInWithOAuth({
     provider: "azure",
     options: {
-      scopes: "openid profile email User.Read",
+      scopes: "email",
       redirectTo: CONFIG.siteUrl,
       queryParams: {
         prompt: "select_account"

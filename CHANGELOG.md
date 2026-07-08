@@ -1,12 +1,16 @@
 # Change Log
 
+## 0.3.3 — Azure personal-account compatibility repair
+
+- Restored the Microsoft login request to Supabase's documented `email` scope.
+- Removed the unnecessary Microsoft Graph `User.Read` request from the client.
+- Prepared the app for the Supabase Azure provider workaround that leaves Azure Tenant URL blank, allowing the default `common` endpoint while the Microsoft app registration still limits access to personal Microsoft accounts.
+- Updated cache-busting and the service-worker cache version.
+- Preserved the live dojo `config.js`.
+
 ## 0.3.2 — Microsoft profile permission repair
 
-- Requests the Microsoft OpenID Connect scopes required for the user profile endpoint.
-- Adds `profile` and Microsoft Graph delegated `User.Read` to the login request.
-- Retains the required `openid` and `email` scopes.
-- Updates cache-busting and the service-worker cache version.
-- Preserves the live dojo `config.js`.
+- Requested additional Microsoft profile scopes while diagnosing the Azure callback failure.
 
 ## 0.3.1 — Microsoft sign-in callback repair
 

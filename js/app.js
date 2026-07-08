@@ -1,15 +1,15 @@
 import {
   CONFIG, isConfigurationReady, readableError, setText, showToast
-} from "./utilities.js?v=0.3.2";
+} from "./utilities.js?v=0.3.3";
 import {
   signInWithMicrosoft, signOut, getCurrentSession,
   onAuthStateChange, establishAuthorisedSession
-} from "./auth.js?v=0.3.2";
-import { loadDashboard } from "./dashboard.js?v=0.3.2";
-import { initialiseNavigation } from "./navigation.js?v=0.3.2";
-import { registerServiceWorker } from "./pwa-updates.js?v=0.3.2";
+} from "./auth.js?v=0.3.3";
+import { loadDashboard } from "./dashboard.js?v=0.3.3";
+import { initialiseNavigation } from "./navigation.js?v=0.3.3";
+import { registerServiceWorker } from "./pwa-updates.js?v=0.3.3";
 
-const BUILD_VERSION = "0.3.2";
+const BUILD_VERSION = "0.3.3";
 
 const loginView = document.getElementById("loginView");
 const appShell = document.getElementById("appShell");

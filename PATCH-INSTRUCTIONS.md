@@ -1,26 +1,28 @@
-# Microsoft Profile Permission Fix v0.3.2
+# Azure Personal-Account Compatibility Fix v0.3.3
 
-This patch addresses:
+This patch addresses the Supabase Azure callback error:
 
 `Error getting user profile from external provider`
 
-Before uploading this patch, add the following delegated Microsoft Graph permissions to the Microsoft Entra app registration:
+Required Supabase setting before testing:
 
-- email
-- offline_access
-- openid
-- profile
-- User.Read
+1. Open Authentication → Sign In / Providers → Azure.
+2. Delete the entire value in **Azure Tenant URL**.
+3. Leave the field blank so Supabase uses its default `common` endpoint.
+4. Keep Azure enabled.
+5. Keep Allow users without an email turned off.
+6. Save the provider settings.
 
-Then upload all files in this patch to the GitHub repository root.
+The Microsoft app registration can remain set to **Personal Microsoft accounts only**. Microsoft Entra will still limit who can authenticate.
 
-The patch does not contain `config.js`, so the live Supabase publishable key is preserved.
+Upload all files in this patch to the GitHub repository root. The patch deliberately does not contain `config.js`.
 
-After GitHub Pages shows a green deployment tick:
+After deployment:
 
-1. Close every Dojo Manager tab.
-2. Open an Edge InPrivate window.
-3. Visit:
-   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=0.3.2`
-4. Press Ctrl+F5 once.
-5. Test Microsoft login again.
+1. Wait for the GitHub Pages deployment to show a green tick.
+2. Close all Dojo Manager tabs.
+3. Open an Edge InPrivate window.
+4. Visit:
+   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=0.3.3`
+5. Press Ctrl+F5 once.
+6. Test Microsoft sign-in again.
