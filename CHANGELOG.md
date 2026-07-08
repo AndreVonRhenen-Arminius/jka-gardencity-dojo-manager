@@ -1,21 +1,14 @@
 # Change Log
 
-## 0.3.1 — Microsoft sign-in repair
+## 0.3.2 — Microsoft profile permission repair
 
-- Fixed the Microsoft sign-in loop caused by asynchronous Supabase calls inside `onAuthStateChange`.
-- Deferred authenticated database checks until after the auth callback completes.
-- Improved sign-in error messages.
-- Updated service-worker caching so application fixes load reliably.
-- Preserved the live dojo `config.js`.
+- Requests the Microsoft OpenID Connect scopes required for the user profile endpoint.
+- Adds `profile` and Microsoft Graph delegated `User.Read` to the login request.
+- Retains the required `openid` and `email` scopes.
+- Updates cache-busting and the service-worker cache version.
+- Preserves the live dojo `config.js`.
 
-## 0.3.0 — Stage 3 starter
+## 0.3.1 — Microsoft sign-in callback repair
 
-- Added Microsoft authentication through Supabase.
-- Added authorised-user profile linking.
-- Added administrator role detection.
-- Added dark charcoal and red JKA theme.
-- Added responsive application shell and grouped navigation.
-- Added dashboard with live counts.
-- Added 30-minute inactivity sign-out.
-- Added PWA manifest and service worker.
-- Added separate dojo configuration and storage identifiers.
+- Deferred authenticated database calls outside the Supabase auth callback.
+- Improved authentication error handling.
