@@ -1,4 +1,5 @@
-const CACHE_NAME = "jka-dojo-manager-v0.3.0";
+const CACHE_NAME = "jka-dojo-manager-v0.3.1";
+
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -29,7 +30,8 @@ self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(key => key.startsWith("jka-dojo-manager-") && key !== CACHE_NAME)
+        keys
+          .filter(key => key.startsWith("jka-dojo-manager-") && key !== CACHE_NAME)
           .map(key => caches.delete(key))
       ))
       .then(() => self.clients.claim())
@@ -42,30 +44,40 @@ self.addEventListener("fetch", event => {
   if (request.method !== "GET") return;
 
   const url = new URL(request.url);
-  if (url.origin.includes("supabase.co") || request.mode === "navigate") {
+
+  // Supabase requests must always go directly to the network.
+  if (url.origin.includes("supabase.co")) return;
+
+  if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() => caches.match("./index.html"))
+      fetch(request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
+          return response;
+        })
+        .catch(() => caches.match("./index.html"))
     );
     return;
   }
 
-  event.respondWith(
-    caches.match(request).then(cached => {
-      const network = fetch(request)
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(request)
         .then(response => {
-          if (response && response.ok && url.origin === self.location.origin) {
+          if (response?.ok) {
             const copy = response.clone();
             caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
           }
           return response;
         })
-        .catch(() => cached);
-
-      return cached || network;
-    })
-  );
+        .catch(() => caches.match(request))
+    );
+  }
 });
 
 self.addEventListener("message", event => {
-  if (event.data === "SKIP_WAITING") self.skipWaiting();
+  if (event.data === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });

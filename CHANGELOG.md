@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.3.1 — Microsoft sign-in repair
+
+- Fixed the Microsoft sign-in loop caused by asynchronous Supabase calls inside `onAuthStateChange`.
+- Deferred authenticated database checks until after the auth callback completes.
+- Improved sign-in error messages.
+- Updated service-worker caching so application fixes load reliably.
+- Preserved the live dojo `config.js`.
+
 ## 0.3.0 — Stage 3 starter
 
 - Added Microsoft authentication through Supabase.

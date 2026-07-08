@@ -1,5 +1,5 @@
-import { getSupabaseClient } from "./database.js";
-import { CONFIG, readableError } from "./utilities.js";
+import { getSupabaseClient } from "./database.js?v=0.3.1";
+import { CONFIG, readableError } from "./utilities.js?v=0.3.1";
 
 const roleCodes = [
   ["administrator", "Administrator"],
@@ -21,13 +21,15 @@ export async function signInWithMicrosoft() {
       }
     }
   });
+
   if (error) throw error;
 }
 
 export async function signOut() {
   const supabase = getSupabaseClient();
-  await supabase.auth.signOut({ scope: "local" });
+  const { error } = await supabase.auth.signOut({ scope: "local" });
   clearDojoLocalState();
+  if (error) throw error;
 }
 
 export async function getCurrentSession() {
@@ -39,16 +41,27 @@ export async function getCurrentSession() {
 
 export function onAuthStateChange(callback) {
   const supabase = getSupabaseClient();
-  return supabase.auth.onAuthStateChange((_event, session) => callback(session));
+
+  return supabase.auth.onAuthStateChange((event, session) => {
+    // Do not run Supabase API calls directly inside this callback.
+    // Deferring the work avoids the current supabase-js auth deadlock.
+    window.setTimeout(() => {
+      Promise.resolve(callback(event, session)).catch(error => {
+        console.error("Deferred authentication event failed:", error);
+      });
+    }, 0);
+  });
 }
 
 export async function establishAuthorisedSession(session) {
-  if (!session?.user) throw new Error("No authenticated Microsoft session was found.");
+  if (!session?.user) {
+    throw new Error("No authenticated Microsoft session was found.");
+  }
 
   const supabase = getSupabaseClient();
+
   const { error: syncError } = await supabase.rpc("sync_current_user_profile");
   if (syncError) {
-    await supabase.auth.signOut({ scope: "local" });
     throw new Error(readableError(syncError));
   }
 
@@ -61,10 +74,12 @@ export async function establishAuthorisedSession(session) {
   if (profileError) throw profileError;
 
   let role = "Authorised user";
+
   for (const [code, label] of roleCodes) {
     const { data, error } = await supabase.rpc("current_user_has_role", {
       p_role_code: code
     });
+
     if (!error && data === true) {
       role = label;
       break;
@@ -80,7 +95,10 @@ export async function establishAuthorisedSession(session) {
 
 function clearDojoLocalState() {
   const prefix = CONFIG.storagePrefix || "jka_dojo_";
+
   for (const key of Object.keys(localStorage)) {
-    if (key.startsWith(prefix)) localStorage.removeItem(key);
+    if (key.startsWith(prefix)) {
+      localStorage.removeItem(key);
+    }
   }
 }
