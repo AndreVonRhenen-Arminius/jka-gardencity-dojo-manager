@@ -1,16 +1,13 @@
-import {
-  CONFIG, isConfigurationReady, readableError, setText, showToast
-} from "./utilities.js?v=0.3.3";
-import {
-  signInWithMicrosoft, signOut, getCurrentSession,
-  onAuthStateChange, establishAuthorisedSession
-} from "./auth.js?v=0.3.3";
-import { loadDashboard } from "./dashboard.js?v=0.3.3";
-import { initialiseNavigation } from "./navigation.js?v=0.3.3";
-import { registerServiceWorker } from "./pwa-updates.js?v=0.3.3";
+import { CONFIG, isConfigurationReady, readableError, setText, showToast } from "./utilities.js?v=0.4.0";
+import { signInWithMicrosoft, signOut, getCurrentSession, onAuthStateChange, establishAuthorisedSession } from "./auth.js?v=0.4.0";
+import { loadDashboard } from "./dashboard.js?v=0.4.0";
+import { activateNavigation, initialiseNavigation } from "./navigation.js?v=0.4.0";
+import { registerServiceWorker } from "./pwa-updates.js?v=0.4.0";
+import { initialiseInstallExperience } from "./install.js?v=0.4.0";
+import { initialiseDialog } from "./ui.js?v=0.4.0";
+import { loadModule } from "./modules.js?v=0.4.0";
 
-const BUILD_VERSION = "0.3.3";
-
+const BUILD_VERSION = "0.4.0";
 const loginView = document.getElementById("loginView");
 const appShell = document.getElementById("appShell");
 const loginStatus = document.getElementById("loginStatus");
@@ -22,13 +19,14 @@ const configurationError = document.getElementById("configurationError");
 let inactivityTimer;
 let currentSessionId;
 let pendingLoginMessage = "";
+let currentPage = "dashboard";
 
 async function initialise() {
   setText("versionLabel", BUILD_VERSION);
   initialiseConnectivity();
-  initialiseNavigation(page => {
-    if (page === "dashboard") loadDashboardSafely();
-  });
+  initialiseDialog();
+  initialiseInstallExperience();
+  initialiseNavigation(navigate);
   initialiseInactivitySignOut();
   await registerServiceWorker();
 
@@ -43,20 +41,31 @@ async function initialise() {
   signInButton.addEventListener("click", handleSignIn);
   signOutButton.addEventListener("click", handleSignOut);
   refreshDashboardButton.addEventListener("click", loadDashboardSafely);
+  window.addEventListener("dojo:data-changed", () => {
+    if (currentPage === "dashboard") loadDashboardSafely();
+  });
 
-  // Register the listener before the first session check.
   onAuthStateChange((event, session) => handleAuthEvent(event, session));
 
   try {
     const session = await getCurrentSession();
-    if (session) {
-      await handleAuthenticatedSession(session);
-    } else {
-      showLogin();
-    }
+    if (session) await handleAuthenticatedSession(session);
+    else showLogin();
   } catch (error) {
     showLogin(readableError(error));
   }
+}
+
+async function navigate(page) {
+  currentPage = page;
+  activateNavigation(page);
+  const url = new URL(window.location.href);
+  if (page === "dashboard") url.searchParams.delete("page");
+  else url.searchParams.set("page", page);
+  history.replaceState({}, "", url);
+
+  if (page === "dashboard") await loadDashboardSafely();
+  else await loadModule(page);
 }
 
 async function handleAuthEvent(event, session) {
@@ -67,11 +76,7 @@ async function handleAuthEvent(event, session) {
     showLogin(message);
     return;
   }
-
-  if (
-    ["INITIAL_SESSION", "SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED"].includes(event) &&
-    session.access_token !== currentSessionId
-  ) {
+  if (["INITIAL_SESSION", "SIGNED_IN", "TOKEN_REFRESHED", "USER_UPDATED"].includes(event) && session.access_token !== currentSessionId) {
     await handleAuthenticatedSession(session);
   }
 }
@@ -80,7 +85,6 @@ async function handleSignIn() {
   signInButton.disabled = true;
   loginStatus.textContent = "Opening Microsoft sign-in…";
   loginStatus.className = "status-message";
-
   try {
     await signInWithMicrosoft();
   } catch (error) {
@@ -95,7 +99,6 @@ async function handleAuthenticatedSession(session) {
     showLogin("Microsoft sign-in did not return a valid session.");
     return;
   }
-
   currentSessionId = session.access_token;
   loginStatus.textContent = "Checking authorised access…";
   loginStatus.className = "status-message";
@@ -107,25 +110,18 @@ async function handleAuthenticatedSession(session) {
     pendingLoginMessage = "";
     showApp();
     resetInactivityTimer();
-    await loadDashboardSafely();
+    await navigate(new URL(window.location.href).searchParams.get("page") || "dashboard");
   } catch (error) {
     const message = readableError(error);
     pendingLoginMessage = message;
     currentSessionId = undefined;
-
-    try {
-      await signOut();
-    } catch (signOutError) {
-      console.error("Sign-out after an authentication error failed:", signOutError);
-    }
-
+    try { await signOut(); } catch (signOutError) { console.error(signOutError); }
     showLogin(message);
   }
 }
 
 async function handleSignOut() {
   pendingLoginMessage = "Signed out.";
-
   try {
     await signOut();
   } finally {
@@ -154,10 +150,7 @@ async function loadDashboardSafely() {
   try {
     await loadDashboard();
   } catch (error) {
-    showToast(
-      readableError(error, "Dashboard information could not be loaded."),
-      "error"
-    );
+    showToast(readableError(error, "Dashboard information could not be loaded."), "error");
   }
 }
 
@@ -169,26 +162,21 @@ function initialiseConnectivity() {
     setText("syncText", online ? "Cloud connected" : "Offline");
     setText("connectionLabel", online ? "Online" : "Offline");
   };
-
   window.addEventListener("online", update);
   window.addEventListener("offline", update);
   update();
 }
 
 function initialiseInactivitySignOut() {
-  const events = ["pointerdown", "keydown", "touchstart", "scroll"];
-
-  for (const eventName of events) {
+  for (const eventName of ["pointerdown", "keydown", "touchstart", "scroll"]) {
     window.addEventListener(eventName, resetInactivityTimer, { passive: true });
   }
 }
 
 function resetInactivityTimer() {
   if (appShell.hidden) return;
-
   clearTimeout(inactivityTimer);
   const minutes = Number(CONFIG.inactivityMinutes || 30);
-
   inactivityTimer = window.setTimeout(async () => {
     showToast("You were signed out after a period of inactivity.", "info");
     await handleSignOut();

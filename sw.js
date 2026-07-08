@@ -1,5 +1,4 @@
-const CACHE_NAME = "jka-dojo-manager-v0.3.3";
-
+const CACHE_NAME = "jka-dojo-manager-v0.4.0";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -12,6 +11,17 @@ const APP_SHELL = [
   "./js/dashboard.js",
   "./js/navigation.js",
   "./js/utilities.js",
+  "./js/ui.js",
+  "./js/modules.js",
+  "./js/install.js",
+  "./js/settings.js",
+  "./js/families.js",
+  "./js/students.js",
+  "./js/terms.js",
+  "./js/sessions.js",
+  "./js/attendance.js",
+  "./js/fees.js",
+  "./js/payments.js",
   "./js/pwa-updates.js",
   "./vendor/supabase.min.js",
   "./assets/icons/icon-192.png",
@@ -30,8 +40,7 @@ self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys
-          .filter(key => key.startsWith("jka-dojo-manager-") && key !== CACHE_NAME)
+        keys.filter(key => key.startsWith("jka-dojo-manager-") && key !== CACHE_NAME)
           .map(key => caches.delete(key))
       ))
       .then(() => self.clients.claim())
@@ -40,12 +49,8 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   const request = event.request;
-
   if (request.method !== "GET") return;
-
   const url = new URL(request.url);
-
-  // Supabase requests must always go directly to the network.
   if (url.origin.includes("supabase.co")) return;
 
   if (request.mode === "navigate") {
@@ -77,7 +82,5 @@ self.addEventListener("fetch", event => {
 });
 
 self.addEventListener("message", event => {
-  if (event.data === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
+  if (event.data === "SKIP_WAITING") self.skipWaiting();
 });

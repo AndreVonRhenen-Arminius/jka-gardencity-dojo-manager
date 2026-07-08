@@ -1,4 +1,4 @@
-import { showToast } from "./utilities.js";
+import { showToast } from "./utilities.js?v=0.4.0";
 
 export async function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) return;

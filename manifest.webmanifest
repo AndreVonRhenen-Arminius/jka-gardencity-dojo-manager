@@ -28,5 +28,38 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Attendance",
+      "short_name": "Attendance",
+      "description": "Open the dojo attendance screen.",
+      "url": "./?page=attendance",
+      "icons": [
+        {
+          "src": "./assets/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Students",
+      "short_name": "Students",
+      "description": "Open the student register.",
+      "url": "./?page=students",
+      "icons": [
+        {
+          "src": "./assets/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
   ]
 }

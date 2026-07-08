@@ -1,10 +1,9 @@
-import { getSupabaseClient } from "./database.js";
-import { formatDate, setText, todayIso, readableError } from "./utilities.js";
+import { getSupabaseClient } from "./database.js?v=0.4.0";
+import { formatDate, setText, todayIso, readableError } from "./utilities.js?v=0.4.0";
 
 async function countRows(table, configure) {
   const supabase = getSupabaseClient();
-  let query = supabase.from(table).select("id", { count: "exact", head: true });
-  query = query.is("deleted_at", null);
+  let query = supabase.from(table).select("id", { count: "exact", head: true }).is("deleted_at", null);
   if (configure) query = configure(query);
   const { count, error } = await query;
   if (error) throw error;
@@ -24,40 +23,39 @@ export async function loadDashboard() {
     countRows("enquiries", query => query.eq("status", "new_enquiry")),
     countRows("charges", query => query.in("status", ["unpaid", "partially_paid", "overdue"])),
     countRows("follow_up_tasks", query => query.in("status", ["open", "in_progress"]).lte("due_date", today)),
-    loadNextSession(today)
+    loadNextSession(today),
+    countRows("terms"),
+    countRows("fee_schedules", query => query.eq("status", "active"))
   ]);
 
-  const ids = [
-    "activeStudentsMetric",
-    "trialStudentsMetric",
-    "newEnquiriesMetric",
-    "outstandingChargesMetric",
-    "followUpsMetric"
-  ];
+  ["activeStudentsMetric","trialStudentsMetric","newEnquiriesMetric","outstandingChargesMetric","followUpsMetric"]
+    .forEach((id, index) => setText(id, results[index].status === "fulfilled" ? results[index].value : "!"));
 
-  ids.forEach((id, index) => {
-    const result = results[index];
-    setText(id, result.status === "fulfilled" ? result.value : "!");
-  });
+  updateChecklist("termChecklistIcon", results[6]);
+  updateChecklist("feeChecklistIcon", results[7]);
+  updateChecklist("studentChecklistIcon", results[0], results[1]);
 
   const sessionResult = results[5];
   if (sessionResult.status === "fulfilled" && sessionResult.value) {
     const session = sessionResult.value;
-    setText("nextSessionMetric", formatDate(session.session_date, {
-      weekday: "short", day: "2-digit", month: "short"
-    }));
-    const details = [
+    setText("nextSessionMetric", formatDate(session.session_date, { weekday: "short", day: "2-digit", month: "short" }));
+    setText("nextSessionNote", [
       session.start_time ? session.start_time.slice(0, 5) : null,
       session.venue || null,
       session.session_type?.replaceAll("_", " ")
-    ].filter(Boolean).join(" · ");
-    setText("nextSessionNote", details || "Scheduled session");
+    ].filter(Boolean).join(" · ") || "Scheduled session");
   } else {
     setText("nextSessionMetric", "Not scheduled");
-    setText("nextSessionNote", sessionResult.status === "rejected"
-      ? readableError(sessionResult.reason)
-      : "Create a session to begin");
+    setText("nextSessionNote", sessionResult.status === "rejected" ? readableError(sessionResult.reason) : "Create a session to begin");
   }
+}
+
+function updateChecklist(id, ...results) {
+  const element = document.getElementById(id);
+  if (!element) return;
+  const complete = results.some(result => result?.status === "fulfilled" && Number(result.value) > 0);
+  element.classList.toggle("complete", complete);
+  element.textContent = complete ? "✓" : (element.dataset.step || element.textContent);
 }
 
 async function loadNextSession(today) {
@@ -72,7 +70,6 @@ async function loadNextSession(today) {
     .order("start_time", { ascending: true, nullsFirst: false })
     .limit(1)
     .maybeSingle();
-
   if (error) throw error;
   return data;
 }

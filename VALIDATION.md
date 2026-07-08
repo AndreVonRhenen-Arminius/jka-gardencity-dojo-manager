@@ -1,12 +1,14 @@
-# Validation
+# Validation — v0.4.0
 
 Validated before packaging:
 
 - `index.html` contains HTML.
-- `css/styles.css` contains CSS.
-- `manifest.webmanifest` contains valid JSON.
-- `sw.js` and JavaScript module files contain JavaScript.
-- `config.js` contains no service-role key or secret value.
-- No household records or household Supabase configuration are included.
-- Dojo project URL and GitHub Pages URL are separate.
-- PWA icons are valid PNG files.
+- `manifest.webmanifest` parses as JSON.
+- `css/styles.css` contains the dark charcoal and JKA red interface.
+- JavaScript module files pass syntax validation.
+- `sw.js` uses the unique dojo cache `jka-dojo-manager-v0.4.0`.
+- The patch does not include `config.js`.
+- No service-role key, Microsoft secret, database password or banking credential is included.
+- No household finance records or household configuration are included.
+- Microsoft login remains configured for the working personal-account flow.
+- Existing Stage 2 tables and Row Level Security policies are used; no database migration is required.

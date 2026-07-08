@@ -4,7 +4,7 @@ Secure, installable Progressive Web App for **JKA Christchurch – GardenCity**.
 
 ## Starter release
 
-Version **0.3.0** provides:
+Version **0.4.0** provides:
 
 - Microsoft sign-in through the separate dojo Supabase project
 - Authorised-user allowlist enforcement
@@ -52,3 +52,17 @@ Published URL:
 `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/`
 
 See `docs/setup-guide.md`.
+
+
+## Functional modules in v0.4.0
+
+- Settings
+- Families and Guardians
+- Students
+- Terms and generated sessions
+- Sessions
+- Attendance
+- Versioned fees and charges
+- Payments and allocations
+- Invoices and printing
+- In-app installation prompt
