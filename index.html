@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en-NZ">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#9f111b">
+  <meta name="description" content="Secure dojo student, attendance and finance management for JKA Christchurch – GardenCity.">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self' https://ystfxuwuzbdecphovero.supabase.co wss://ystfxuwuzbdecphovero.supabase.co; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; upgrade-insecure-requests">
+  <title>JKA GardenCity Dojo Manager</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./assets/icons/icon-192.png" sizes="192x192">
+  <link rel="apple-touch-icon" href="./assets/icons/icon-192.png">
+  <link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+  <noscript>
+    <div class="noscript">JavaScript is required to use JKA GardenCity Dojo Manager.</div>
+  </noscript>
+
+  <div id="configurationError" class="configuration-error" hidden>
+    <strong>Setup required:</strong>
+    Open <code>config.js</code> and enter the dojo Supabase publishable key.
+  </div>
+
+  <section id="loginView" class="login-view" aria-labelledby="loginTitle">
+    <div class="login-card">
+      <div class="brand-mark" aria-hidden="true">JKA</div>
+      <p class="eyebrow">JKA Christchurch – GardenCity</p>
+      <h1 id="loginTitle">Dojo Manager</h1>
+      <p class="login-copy">
+        Secure access for authorised dojo administrators and instructors.
+      </p>
+      <button id="signInButton" class="button button-primary button-large" type="button">
+        Sign in with Microsoft
+      </button>
+      <p id="loginStatus" class="status-message" role="status" aria-live="polite"></p>
+      <p class="privacy-note">
+        Only approved Microsoft accounts can access dojo information.
+      </p>
+    </div>
+  </section>
+
+  <div id="appShell" class="app-shell" hidden>
+    <header class="topbar">
+      <button id="menuButton" class="icon-button mobile-only" type="button" aria-label="Open navigation">☰</button>
+      <div>
+        <p class="topbar-dojo">JKA Christchurch – GardenCity</p>
+        <h1 id="pageTitle">Dashboard</h1>
+      </div>
+      <div class="topbar-actions">
+        <div id="syncBadge" class="sync-badge" data-state="synced">
+          <span class="sync-dot"></span>
+          <span id="syncText">Cloud connected</span>
+        </div>
+        <div class="user-menu">
+          <div class="user-details">
+            <strong id="userDisplayName">Administrator</strong>
+            <span id="userRole">Administrator</span>
+          </div>
+          <button id="signOutButton" class="button button-secondary" type="button">Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <aside id="sidebar" class="sidebar" aria-label="Main navigation">
+      <div class="sidebar-brand">
+        <div class="brand-mark brand-mark-small">JKA</div>
+        <div>
+          <strong>GardenCity</strong>
+          <span>Dojo Manager</span>
+        </div>
+      </div>
+
+      <nav id="mainNavigation">
+        <button class="nav-item active" type="button" data-page="dashboard">
+          <span aria-hidden="true">⌂</span><span>Dashboard</span>
+        </button>
+
+        <p class="nav-heading">People</p>
+        <button class="nav-item" type="button" data-page="students"><span aria-hidden="true">人</span><span>Students</span></button>
+        <button class="nav-item" type="button" data-page="families"><span aria-hidden="true">家</span><span>Families &amp; Guardians</span></button>
+        <button class="nav-item" type="button" data-page="enquiries"><span aria-hidden="true">?</span><span>Enquiries &amp; Trials</span></button>
+
+        <p class="nav-heading">Training</p>
+        <button class="nav-item" type="button" data-page="attendance"><span aria-hidden="true">✓</span><span>Attendance</span></button>
+        <button class="nav-item" type="button" data-page="sessions"><span aria-hidden="true">日</span><span>Sessions</span></button>
+        <button class="nav-item" type="button" data-page="terms"><span aria-hidden="true">T</span><span>Terms</span></button>
+
+        <p class="nav-heading">Development</p>
+        <button class="nav-item" type="button" data-page="gradings"><span aria-hidden="true">帯</span><span>Gradings</span></button>
+        <button class="nav-item" type="button" data-page="progress"><span aria-hidden="true">↗</span><span>Progress &amp; Goals</span></button>
+
+        <p class="nav-heading">Finance</p>
+        <button class="nav-item" type="button" data-page="fees"><span aria-hidden="true">$</span><span>Fees &amp; Ledgers</span></button>
+        <button class="nav-item" type="button" data-page="payments"><span aria-hidden="true">₿</span><span>Payments &amp; Invoices</span></button>
+        <button class="nav-item" type="button" data-page="expenses"><span aria-hidden="true">−</span><span>Expenses</span></button>
+        <button class="nav-item" type="button" data-page="banking"><span aria-hidden="true">▤</span><span>Banking</span></button>
+
+        <p class="nav-heading">Records</p>
+        <button class="nav-item" type="button" data-page="reports"><span aria-hidden="true">▥</span><span>Reports</span></button>
+        <button class="nav-item" type="button" data-page="communication"><span aria-hidden="true">✉</span><span>Communication</span></button>
+
+        <p class="nav-heading">System</p>
+        <button class="nav-item" type="button" data-page="backup"><span aria-hidden="true">⤓</span><span>Backup &amp; Sync</span></button>
+        <button class="nav-item" type="button" data-page="audit"><span aria-hidden="true">◴</span><span>Audit History</span></button>
+        <button class="nav-item" type="button" data-page="settings"><span aria-hidden="true">⚙</span><span>Settings</span></button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <span>Version <span id="versionLabel">0.3.0</span></span>
+        <span id="connectionLabel">Online</span>
+      </div>
+    </aside>
+
+    <main id="mainContent" class="main-content" tabindex="-1">
+      <section id="dashboardPage" class="page active" data-page-panel="dashboard">
+        <div class="page-header">
+          <div>
+            <p class="eyebrow">Dojo overview</p>
+            <h2>Dashboard</h2>
+            <p id="dashboardDate" class="muted"></p>
+          </div>
+          <button id="refreshDashboardButton" class="button button-secondary" type="button">Refresh</button>
+        </div>
+
+        <div class="metric-grid">
+          <article class="metric-card accent-red">
+            <span class="metric-label">Active students</span>
+            <strong id="activeStudentsMetric">—</strong>
+            <span class="metric-note">Current active register</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Trial students</span>
+            <strong id="trialStudentsMetric">—</strong>
+            <span class="metric-note">Students currently on trial</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">New enquiries</span>
+            <strong id="newEnquiriesMetric">—</strong>
+            <span class="metric-note">Awaiting first contact</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Outstanding charges</span>
+            <strong id="outstandingChargesMetric">—</strong>
+            <span class="metric-note">Unpaid or partly paid</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Follow-ups due</span>
+            <strong id="followUpsMetric">—</strong>
+            <span class="metric-note">Open tasks due now</span>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Next session</span>
+            <strong id="nextSessionMetric" class="metric-text">Not scheduled</strong>
+            <span id="nextSessionNote" class="metric-note">Create a session to begin</span>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">Getting started</p>
+                <h3>Initial setup checklist</h3>
+              </div>
+            </div>
+            <ol class="setup-list">
+              <li><span class="check complete">✓</span><span>Separate Supabase database installed and verified</span></li>
+              <li><span class="check complete">✓</span><span>Microsoft authentication provider configured</span></li>
+              <li><span id="configChecklistIcon" class="check">3</span><span>Add the Supabase publishable key to <code>config.js</code></span></li>
+              <li><span class="check">4</span><span>Create the first dojo term and training schedule</span></li>
+              <li><span class="check">5</span><span>Create the versioned 2026 fee schedule</span></li>
+              <li><span class="check">6</span><span>Add fictional test students before using real data</span></li>
+            </ol>
+          </article>
+
+          <article class="panel">
+            <div class="panel-header">
+              <div>
+                <p class="eyebrow">System</p>
+                <h3>Security status</h3>
+              </div>
+              <span class="status-badge success">Protected</span>
+            </div>
+            <dl class="status-list">
+              <div><dt>Database</dt><dd>Separate dojo Supabase project</dd></div>
+              <div><dt>Access</dt><dd>Microsoft login and allowlist</dd></div>
+              <div><dt>Row security</dt><dd>Enabled on 70 tables</dd></div>
+              <div><dt>Inactivity sign-out</dt><dd>30 minutes</dd></div>
+              <div><dt>Household data</dt><dd>Not connected</dd></div>
+            </dl>
+          </article>
+        </div>
+      </section>
+
+      <section id="placeholderPage" class="page" data-page-panel="placeholder">
+        <div class="page-header">
+          <div>
+            <p id="placeholderEyebrow" class="eyebrow">Module</p>
+            <h2 id="placeholderTitle">Module</h2>
+            <p id="placeholderDescription" class="muted"></p>
+          </div>
+        </div>
+        <article class="empty-state">
+          <div class="empty-icon">JKA</div>
+          <h3 id="placeholderHeading">Module shell ready</h3>
+          <p id="placeholderBody">
+            This secured module will be implemented in the next controlled development step.
+          </p>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <div id="toastRegion" class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="./config.js"></script>
+  <script src="./vendor/supabase.min.js"></script>
+  <script type="module" src="./js/app.js"></script>
+</body>
+</html>
