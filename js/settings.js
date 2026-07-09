@@ -1,7 +1,7 @@
-import { getSupabaseClient } from "./database.js?v=1.0.2";
-import { getCurrentSession } from "./auth.js?v=1.0.2";
-import { dispatchDataChanged, formatDateTime, normaliseText } from "./utilities.js?v=1.0.2";
-import { closeDialog, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.0.2";
+import { getSupabaseClient } from "./database.js?v=1.1.0";
+import { getCurrentSession } from "./auth.js?v=1.1.0";
+import { dispatchDataChanged, formatDateTime, normaliseText } from "./utilities.js?v=1.1.0";
+import { closeDialog, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.1.0";
 
 const keys = ["dojo.profile", "invoice.defaults", "training.defaults", "training.default_days", "security.inactivity_timeout_minutes"];
 let accessState = { users: [], roles: [], assignments: [], currentAuthUserId: null };

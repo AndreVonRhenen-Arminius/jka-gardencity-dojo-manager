@@ -1,9 +1,9 @@
-import { getSupabaseClient } from "./database.js?v=1.0.2";
-import { dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.0.2";
+import { getSupabaseClient } from "./database.js?v=1.1.0";
+import { dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.1.0";
 import {
   closeDialog, emptyState, escapeHtml, moduleHeader, notifyError,
   notifySuccess, openDialog, setButtonBusy, statusBadge
-} from "./ui.js?v=1.0.2";
+} from "./ui.js?v=1.1.0";
 
 let state = { events: [], records: [], students: [], belts: [], feeSchedules: [], feeItems: [] };
 

@@ -4,47 +4,44 @@ A secure, installable Progressive Web App for **JKA Christchurch – GardenCity*
 
 ## Release
 
-Version **1.0.0** completes the approved dojo-management scope.
+Version **1.1.0** adds a linked Student Hub and automatic missing-information email drafts.
 
-## Functional areas
+## Main source of truth
 
-- Dashboard
-- Students and protected student records
-- Families and guardians
-- Enquiries and trials
-- Attendance
-- Terms and training sessions
-- Gradings
-- Progress and goals
-- Fees, charges and ledgers
-- Payments, allocations, receipts and invoices
-- Expenses and recurring expenses
-- Banking imports, matching and reconciliation
-- Reports and CSV export
-- Communication history and follow-ups
-- Encrypted backup and controlled restore
-- Audit history, recycle bin and conflict review
-- Dojo settings and authorised-user management
-- PWA installation
+**Student Hub** is the default place to add and edit:
+
+- student identity and status
+- start date, school and JKA numbers
+- current belt and payment plan
+- family and billing information
+- primary guardian name, email and mobile number
+- consent decisions
+
+The database stores these records once and links them by ID. Attendance, Gradings,
+Progress, Fees, Payments, Invoices, Banking, Reports and Communication read the
+same records rather than maintaining separate copies.
+
+Use **Profile & missing info** within Student Hub for emergency contacts, protected
+medical information, student notes, safety alerts and parent or guardian email drafts.
+
+## Missing-information email drafts
+
+The profile checks the saved student, family, guardian, emergency, medical and
+consent information. When information is missing, it creates a personalised email
+that can be:
+
+- copied
+- opened in the default email application
+- logged in Communication with a seven-day follow-up task
 
 ## Security
 
 - Microsoft authentication through the separate dojo Supabase project
-- Application allowlist and role checks
-- Row Level Security on all public application tables
-- Protected medical information
-- Audit history for important changes
-- Thirty-minute default inactivity sign-out, configurable in Settings
-- No service-role key or Microsoft client secret in browser code
-- No connection to Fortnight Finance
+- authorised-user and role checks
+- Row Level Security
+- protected medical information
+- inactivity sign-out
+- no service-role key or Microsoft client secret in the browser files
+- no connection to Fortnight Finance
 
-## Upgrade
-
-This release is supplied as an upgrade patch. It deliberately excludes
-`config.js`, so the working live Supabase URL and publishable key are preserved.
-
-See:
-
-- `PATCH-INSTRUCTIONS.md`
-- `docs/USER-GUIDE.md`
-- `docs/FINAL-TEST-CHECKLIST.md`
+See `PATCH-INSTRUCTIONS.md` and `docs/STUDENT-HUB-GUIDE.md`.

@@ -1,5 +1,5 @@
 export const pageInformation = {
-  students: ["People", "Students", "Manage student records, belts, status and enrolment information."],
+  students: ["People", "Student Hub", "Main source of truth for student, family and primary guardian information."],
   families: ["People", "Families & Guardians", "Link siblings, guardians, contacts and family billing records."],
   enquiries: ["People", "Enquiries & Trials", "Track enquiries, trial bookings, follow-ups and conversions."],
   attendance: ["Training", "Attendance", "Fast mobile attendance entry for Tuesday and Thursday classes."],

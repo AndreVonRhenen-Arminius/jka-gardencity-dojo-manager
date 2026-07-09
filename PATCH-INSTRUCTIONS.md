@@ -1,43 +1,64 @@
-# JKA Dojo Manager Schema Fix — v1.0.2
+# Upgrade Instructions — Student Hub v1.1.0
 
-This patch upgrades the working version 1.0.1 installation.
-
-## What it fixes
-
-The installed database uses the belt-rank column `rank_order`. The app was attempting to read and sort by `display_order`, which does not exist. Version 1.0.2 corrects Students and Gradings to use the installed schema.
-
-The patch also retains the version 1.0.1 family-dialog fixes:
-
-- Create Family submits correctly.
-- Errors appear inside the dialog.
-- Clicking outside the dialog does not discard entered information.
-
-## Upload
-
-1. Extract the ZIP.
-2. Open the GitHub repository `jka-gardencity-dojo-manager`.
-3. Select **Add file → Upload files**.
-4. Upload everything inside the extracted folder.
-5. Use the commit message:
-
-   `Fix schema compatibility and validate app v1.0.2`
-
-6. Commit directly to `main`.
-7. Wait for the GitHub Pages deployment to show a green tick.
-
-## Refresh
-
-1. Close all Dojo Manager browser tabs and installed-app windows.
-2. Open:
-
-   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.0.2`
-
-3. Press `Ctrl + F5` once.
-4. Confirm the bottom-left corner shows **Version 1.0.2**.
-5. Open Students and Gradings and confirm both pages load.
+This patch upgrades the working JKA GardenCity Dojo Manager v1.0.2 installation.
 
 ## Important
 
+- The ZIP deliberately does **not** contain `config.js`.
+- Your Supabase publishable key and working Microsoft login configuration are preserved.
 - No SQL needs to be run.
-- `config.js` is not included, so the working Supabase publishable key is preserved.
-- Test with fictional records before entering real medical, financial or banking data.
+- Upload the extracted contents, not the ZIP file itself.
+
+## Upload to GitHub
+
+1. Extract `JKA-Dojo-Manager-Student-Hub-v1.1.0.zip`.
+2. Open the GitHub repository `jka-gardencity-dojo-manager`.
+3. Open **Code**.
+4. Select **Add file → Upload files**.
+5. Select everything inside the extracted patch folder.
+6. Upload the selected files and folders.
+7. Use the commit message:
+
+   `Add linked Student Hub and email drafts v1.1.0`
+
+8. Commit directly to `main`.
+9. Open **Actions** and wait for the Pages deployment to show a green tick.
+
+## Load the new release
+
+1. Close every browser tab and installed Dojo Manager window.
+2. Open:
+
+   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.1.0`
+
+3. Press `Ctrl + F5` once.
+4. Confirm the bottom-left corner shows **Version 1.1.0**.
+
+## New default workflow
+
+Use **Student Hub** as the main add and edit section.
+
+1. Select **Add student & family**.
+2. Enter student details.
+3. Select an existing family or create a new one in the same form.
+4. Select an existing primary guardian or create one in the same form.
+5. Save once.
+6. The same linked record appears automatically in all other modules.
+
+Use **Profile & missing info** for:
+
+- emergency contacts
+- protected medical information
+- student-specific notes
+- attendance safety alerts
+- automatic missing-information email drafts
+
+Use **Families & Guardians** mainly as a linked directory or to add an additional guardian.
+
+## Test with fictional records first
+
+1. Create a fictional student with a new family and guardian.
+2. Confirm the student appears in Attendance, Gradings, Progress, Fees, Reports and Communication.
+3. Edit the guardian email in Student Hub.
+4. Confirm the updated email appears in the student profile and invoice-related views.
+5. Leave several fields blank and test the automatic missing-information email draft.

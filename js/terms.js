@@ -1,6 +1,6 @@
-import { getSupabaseClient } from "./database.js?v=1.0.2";
-import { dispatchDataChanged, formatCurrency, formatDate, normaliseText, todayIso } from "./utilities.js?v=1.0.2";
-import { closeDialog, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.0.2";
+import { getSupabaseClient } from "./database.js?v=1.1.0";
+import { dispatchDataChanged, formatCurrency, formatDate, normaliseText, todayIso } from "./utilities.js?v=1.1.0";
+import { closeDialog, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.1.0";
 
 let state = { terms: [] };
 

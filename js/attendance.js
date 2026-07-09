@@ -1,6 +1,6 @@
-import { getSupabaseClient } from "./database.js?v=1.0.2";
-import { dispatchDataChanged, formatDate } from "./utilities.js?v=1.0.2";
-import { emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, setButtonBusy, statusBadge } from "./ui.js?v=1.0.2";
+import { getSupabaseClient } from "./database.js?v=1.1.0";
+import { dispatchDataChanged, formatDate } from "./utilities.js?v=1.1.0";
+import { emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, setButtonBusy, statusBadge } from "./ui.js?v=1.1.0";
 
 let state = { sessions: [], students: [], records: [], alerts: [], selectedSessionId: "" };
 

@@ -1,4 +1,4 @@
-import { showToast } from "./utilities.js?v=1.0.2";
+import { showToast } from "./utilities.js?v=1.1.0";
 
 let deferredInstallPrompt = null;
 let installed = false;

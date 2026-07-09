@@ -1,46 +1,29 @@
 # Change Log
 
-## 1.0.2 — Family dialog reliability fix
+## 1.1.0 — Linked Student Hub and missing-information email drafts
 
-- Fixed the Create Family button by removing invalid nested HTML forms.
-- Changed family and guardian save actions to proper form submission events.
-- Prevented dialogs from closing when the dark area beside them is clicked.
-- Added visible error messages inside dialogs so database or permission errors are no longer hidden behind the modal.
-- Updated the service-worker cache and browser module versions.
+- Renamed Students to **Student Hub** and made it the default source of truth.
+- Added one guided master form for the student, family, billing details and primary guardian.
+- Linked the student record to Attendance, Gradings, Progress, Fees, Payments, Invoices, Banking, Reports and Communication through the existing database IDs.
+- Added automatic guardian-to-family and guardian-to-student synchronisation.
+- Added family and guardian duplicate checks using student names, dates of birth, family names, email addresses and mobile numbers.
+- Changed Families & Guardians into a linked directory with Student Hub as the preferred editor.
+- Retained advanced family editing and additional-guardian linking for exceptional cases.
+- Added profile completeness scoring to the Student Hub list.
+- Added a missing-information checklist to each student profile.
+- Added automatic parent or guardian email drafts based on the exact missing information.
+- Added Copy email, Open in email app, and Log request with seven-day follow-up actions.
+- Added explicit Granted, Declined and Not confirmed photography-consent choices.
+- Preserved protected medical, emergency-contact, note and safety-alert sections inside Student Hub.
+- No database migration is required.
+- The patch excludes `config.js` and does not change the working Microsoft authentication configuration.
 
-## 1.0.0 — Feature-complete approved scope
+## 1.0.2 — Schema compatibility correction
 
-- Completed every navigation module in the approved JKA GardenCity scope.
-- Added enquiries, trial tracking, follow-ups and enquiry-to-student conversion.
-- Added grading events, grading results, belt updates and optional grading charges.
-- Added student progress reviews, ratings, goals and completion tracking.
-- Added protected student records for notes, guardians, emergency contacts,
-  medical information and attendance safety alerts.
-- Added expenses, expense payments, suppliers, financial accounts and recurring expenses.
-- Added Kiwibank CSV import, duplicate fingerprints, review states, payment and
-  expense matching, matching rules and account reconciliation.
-- Added reports for students, attendance, family balances and finance,
-  including print and CSV export.
-- Added communication history and follow-up task management.
-- Added encrypted manual backups using PBKDF2-SHA256 and AES-256-GCM,
-  validation, history and controlled merge restore.
-- Added audit history, recycle-bin recovery, registered-device review and
-  sync-conflict review.
-- Added payment receipts and payment reversal controls.
-- Added authorised-user and role management with safeguards that prevent
-  removal of the last active Administrator.
-- Applied the saved inactivity timeout immediately after settings changes.
-- Updated the service-worker cache to version 1.0.0.
-- Preserved the working Microsoft personal-account login flow.
-- Preserved the existing live `config.js`; this upgrade contains no secret keys.
-- No household finance data or household Supabase configuration is included.
+- Corrected belt-rank ordering to use `rank_order`.
+- Validated application queries and mutations against the installed Stage 2 schema.
 
-## 0.4.0 — First functional modules
+## 1.0.1 — Family dialog correction
 
-- Added Settings, Families, Students, Terms, Sessions, Attendance,
-  Fee Schedules, Charges, Payments and Invoices.
-- Added in-app PWA installation support.
-
-## 0.3.3 — Microsoft personal-account authentication repair
-
-- Fixed the Supabase Azure personal-account login flow.
+- Corrected family and guardian form submission.
+- Prevented accidental backdrop clicks from closing forms.
