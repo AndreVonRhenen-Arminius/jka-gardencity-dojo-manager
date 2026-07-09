@@ -1,18 +1,17 @@
-# Validation — v1.2.0
+# Validation — v1.2.1
 
 Completed before packaging:
 
-- JavaScript syntax validation passed for all modules and the service worker.
+- JavaScript syntax checks passed for every module and the service worker.
 - The manifest parses as valid JSON.
 - Every local JavaScript import resolves.
-- Every service-worker app-shell file exists in the complete deployment tree.
-- All referenced database tables exist in the Stage 2 schema.
-- The new app-setting keys use the existing `app_settings` JSON structure.
-- Student-specific billing uses the existing `student_billing_profiles` table.
-- Referral rules use the existing `referral_reward_rules` table.
-- Automatic current-term enrolment uses the existing `term_enrolments` table.
-- Term synchronisation preserves sessions that already have attendance history.
-- The patch excludes `config.js` and contains no secret or service-role key.
-- The safe family deletion update remains included.
-
-Live browser and Supabase testing must still be completed using fictional records after deployment.
+- PostgreSQL date-only values are formatted as calendar dates in UTC,
+  preventing New Zealand timezone conversion from adding one day.
+- Test dates:
+  - 2026-07-21 displays as Tuesday.
+  - 2026-07-23 displays as Thursday.
+  - 2026-10-13 displays as Tuesday during New Zealand daylight saving.
+  - 2026-10-15 displays as Thursday during New Zealand daylight saving.
+- The patch excludes `config.js`.
+- No secret keys or credentials are included.
+- No SQL migration is required.

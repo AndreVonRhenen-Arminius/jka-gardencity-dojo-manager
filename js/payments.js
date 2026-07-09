@@ -1,6 +1,6 @@
-import { getSupabaseClient } from "./database.js?v=1.2.0";
-import { datePlusDays, dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.2.0";
-import { closeDialog, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.2.0";
+import { getSupabaseClient } from "./database.js?v=1.2.1";
+import { datePlusDays, dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.2.1";
+import { closeDialog, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.2.1";
 
 let state = {
   families: [], guardians: [], links: [], payments: [], allocations: [],

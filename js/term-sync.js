@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "./database.js?v=1.2.0";
+import { getSupabaseClient } from "./database.js?v=1.2.1";
 
 const SYNC_CANCELLATION_PREFIX = "Term calendar sync:";
 

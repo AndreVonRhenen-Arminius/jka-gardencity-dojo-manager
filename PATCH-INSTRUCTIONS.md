@@ -1,13 +1,20 @@
-# Upgrade Instructions — v1.2.0
+# Upgrade Instructions — v1.2.1
 
-This patch upgrades the working JKA GardenCity Dojo Manager v1.1.1 installation.
+This patch corrects Tuesday and Thursday session dates that were displayed
+one day late.
+
+## Cause
+
+The database already stored the correct dates. The browser formatter treated a
+date-only value as a UTC time and then converted it to New Zealand time. That
+moved Tuesday to Wednesday and Thursday to Friday on screen.
 
 ## Important
 
-- The ZIP does **not** contain `config.js`.
-- Your Supabase publishable key and Microsoft login settings are preserved.
-- No SQL needs to be run. Version 1.2.0 uses tables already installed during Stage 2.
-- Upload the extracted contents, not the ZIP file itself.
+- Do not delete or regenerate existing sessions.
+- No SQL needs to be run.
+- The ZIP does not contain `config.js`.
+- Your Supabase key and Microsoft login settings remain unchanged.
 
 ## Upload
 
@@ -17,32 +24,19 @@ This patch upgrades the working JKA GardenCity Dojo Manager v1.1.1 installation.
 4. Upload everything inside the extracted folder.
 5. Use commit message:
 
-   `Add dojo settings term sync and student billing v1.2.0`
+   `Fix Tuesday and Thursday session dates v1.2.1`
 
 6. Commit directly to `main`.
-7. Open **Actions** and wait for the Pages deployment to show a green tick.
+7. Wait for the GitHub Pages deployment to show a green tick.
 
-## Open the update
+## Open the corrected version
 
-1. Close all browser tabs and installed-app windows for the Dojo Manager.
+1. Close all browser tabs and installed Dojo Manager windows.
 2. Open:
 
-   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.2.0`
+   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.2.1`
 
-3. Press `Ctrl + F5` once.
-4. Confirm the bottom-left corner shows **Version 1.2.0**.
-
-## First setup after upgrading
-
-1. Open **Settings**.
-2. Complete the dojo contact and address fields.
-3. Confirm the normal training days, times and venue.
-4. Enter the Term 1–4 dates for 2026.
-5. Confirm the fee and referral rules.
-6. Select **Save settings and sync terms**.
-7. Open **Terms** and confirm the calculated payment weeks.
-8. Open **Attendance** and confirm the generated sessions appear.
-9. Open **Student Hub**, edit a fictional student and confirm the fee preview.
-10. Open **Fees & Ledgers** and create a fictional term or weekly charge.
-
-Use fictional records before applying the workflow to real payments.
+3. Press `Ctrl + F5`.
+4. Confirm the bottom-left corner shows `Version 1.2.1`.
+5. Open **Sessions** and **Attendance**.
+6. Confirm the generated dates display on Tuesdays and Thursdays.

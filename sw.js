@@ -1,4 +1,4 @@
-const CACHE_NAME = "jka-dojo-manager-v1.2.0";
+const CACHE_NAME = "jka-dojo-manager-v1.2.1";
 
 const APP_SHELL = [
   "./",

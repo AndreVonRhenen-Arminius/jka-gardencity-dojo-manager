@@ -1,6 +1,6 @@
-import { getSupabaseClient } from "./database.js?v=1.2.0";
-import { CONFIG, formatDateTime, normaliseText, todayIso } from "./utilities.js?v=1.2.0";
-import { emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, setButtonBusy, statusBadge } from "./ui.js?v=1.2.0";
+import { getSupabaseClient } from "./database.js?v=1.2.1";
+import { CONFIG, formatDateTime, normaliseText, todayIso } from "./utilities.js?v=1.2.1";
+import { emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, setButtonBusy, statusBadge } from "./ui.js?v=1.2.1";
 
 const BACKUP_MAGIC = "JKA_GARDENCITY_DOJO_ENCRYPTED_BACKUP";
 const BACKUP_VERSION = 2;

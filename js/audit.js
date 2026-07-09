@@ -1,9 +1,9 @@
-import { getSupabaseClient } from "./database.js?v=1.2.0";
-import { formatDateTime } from "./utilities.js?v=1.2.0";
+import { getSupabaseClient } from "./database.js?v=1.2.1";
+import { formatDateTime } from "./utilities.js?v=1.2.1";
 import {
   confirmAction, emptyState, escapeHtml, moduleHeader, notifyError,
   notifySuccess, openDialog, closeDialog, statusBadge
-} from "./ui.js?v=1.2.0";
+} from "./ui.js?v=1.2.1";
 
 const restorableTables = new Set([
   "app_settings","families","guardians","students","student_notes","student_emergency_contacts",

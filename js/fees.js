@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "./database.js?v=1.2.0";
+import { getSupabaseClient } from "./database.js?v=1.2.1";
 import {
   dispatchDataChanged,
   formatCurrency,
@@ -6,7 +6,7 @@ import {
   normaliseText,
   parseMoney,
   todayIso
-} from "./utilities.js?v=1.2.0";
+} from "./utilities.js?v=1.2.1";
 import {
   closeDialog,
   emptyState,
@@ -17,7 +17,7 @@ import {
   openDialog,
   setButtonBusy,
   statusBadge
-} from "./ui.js?v=1.2.0";
+} from "./ui.js?v=1.2.1";
 import {
   DEFAULT_FEE_SETTINGS,
   calculateStudentPricing,
@@ -25,7 +25,7 @@ import {
   normaliseBillingProfile,
   referralSummary,
   serializeBillingNotes
-} from "./billing.js?v=1.2.0";
+} from "./billing.js?v=1.2.1";
 
 let state = {
   schedules: [],

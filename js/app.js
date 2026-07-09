@@ -1,14 +1,14 @@
-import { CONFIG, isConfigurationReady, readableError, setText, showToast } from "./utilities.js?v=1.2.0";
-import { signInWithMicrosoft, signOut, getCurrentSession, onAuthStateChange, establishAuthorisedSession } from "./auth.js?v=1.2.0";
-import { loadDashboard } from "./dashboard.js?v=1.2.0";
-import { activateNavigation, initialiseNavigation } from "./navigation.js?v=1.2.0";
-import { registerServiceWorker } from "./pwa-updates.js?v=1.2.0";
-import { initialiseInstallExperience } from "./install.js?v=1.2.0";
-import { initialiseDialog } from "./ui.js?v=1.2.0";
-import { loadModule } from "./modules.js?v=1.2.0";
-import { getSupabaseClient } from "./database.js?v=1.2.0";
+import { CONFIG, isConfigurationReady, readableError, setText, showToast } from "./utilities.js?v=1.2.1";
+import { signInWithMicrosoft, signOut, getCurrentSession, onAuthStateChange, establishAuthorisedSession } from "./auth.js?v=1.2.1";
+import { loadDashboard } from "./dashboard.js?v=1.2.1";
+import { activateNavigation, initialiseNavigation } from "./navigation.js?v=1.2.1";
+import { registerServiceWorker } from "./pwa-updates.js?v=1.2.1";
+import { initialiseInstallExperience } from "./install.js?v=1.2.1";
+import { initialiseDialog } from "./ui.js?v=1.2.1";
+import { loadModule } from "./modules.js?v=1.2.1";
+import { getSupabaseClient } from "./database.js?v=1.2.1";
 
-const BUILD_VERSION = "1.2.0";
+const BUILD_VERSION = "1.2.1";
 const loginView = document.getElementById("loginView");
 const appShell = document.getElementById("appShell");
 const loginStatus = document.getElementById("loginStatus");

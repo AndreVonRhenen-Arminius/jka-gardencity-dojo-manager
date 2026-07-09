@@ -1,6 +1,6 @@
-import { getSupabaseClient } from "./database.js?v=1.2.0";
-import { formatCurrency, formatDate, todayIso } from "./utilities.js?v=1.2.0";
-import { emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, setButtonBusy } from "./ui.js?v=1.2.0";
+import { getSupabaseClient } from "./database.js?v=1.2.1";
+import { formatCurrency, formatDate, todayIso } from "./utilities.js?v=1.2.1";
+import { emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, setButtonBusy } from "./ui.js?v=1.2.1";
 
 let state = { students: [], families: [], sessions: [], attendance: [], payments: [], expenses: [], charges: [], allocations: [] };
 

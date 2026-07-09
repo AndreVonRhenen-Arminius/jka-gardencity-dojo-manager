@@ -1,11 +1,11 @@
-import { getSupabaseClient } from "./database.js?v=1.2.0";
+import { getSupabaseClient } from "./database.js?v=1.2.1";
 import {
   dispatchDataChanged,
   formatCurrency,
   formatDate,
   normaliseText,
   todayIso
-} from "./utilities.js?v=1.2.0";
+} from "./utilities.js?v=1.2.1";
 import {
   closeDialog,
   emptyState,
@@ -16,9 +16,9 @@ import {
   openDialog,
   setButtonBusy,
   statusBadge
-} from "./ui.js?v=1.2.0";
-import { syncTermSessions } from "./term-sync.js?v=1.2.0";
-import { DEFAULT_FEE_SETTINGS } from "./billing.js?v=1.2.0";
+} from "./ui.js?v=1.2.1";
+import { syncTermSessions } from "./term-sync.js?v=1.2.1";
+import { DEFAULT_FEE_SETTINGS } from "./billing.js?v=1.2.1";
 
 let state = { terms: [], sessions: [], feeSettings: DEFAULT_FEE_SETTINGS };
 

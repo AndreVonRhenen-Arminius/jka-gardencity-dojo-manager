@@ -10,13 +10,37 @@ export function isConfigurationReady() {
 
 export function formatDate(value, options = {}) {
   if (!value) return "—";
-  const raw = value instanceof Date ? value : new Date(`${String(value).slice(0, 10)}T12:00:00Z`);
+
+  const text = typeof value === "string" ? value.trim() : "";
+  const dateOnlyMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  let raw;
+  let defaultTimeZone;
+
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch;
+    raw = new Date(Date.UTC(
+      Number(year),
+      Number(month) - 1,
+      Number(day)
+    ));
+
+    // PostgreSQL DATE values are calendar dates, not moments in time.
+    // Formatting them in Pacific/Auckland previously moved Tuesdays to
+    // Wednesdays and Thursdays to Fridays.
+    defaultTimeZone = "UTC";
+  } else {
+    raw = value instanceof Date ? value : new Date(value);
+    defaultTimeZone = CONFIG.timezone || "Pacific/Auckland";
+  }
+
   if (Number.isNaN(raw.getTime())) return String(value);
+
   return new Intl.DateTimeFormat(CONFIG.locale || "en-NZ", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
-    timeZone: CONFIG.timezone || "Pacific/Auckland",
+    timeZone: defaultTimeZone,
     ...options
   }).format(raw);
 }
