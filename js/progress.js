@@ -1,9 +1,9 @@
-import { getSupabaseClient } from "./database.js?v=1.0.1";
-import { dispatchDataChanged, formatDate, normaliseText, todayIso } from "./utilities.js?v=1.0.1";
+import { getSupabaseClient } from "./database.js?v=1.0.2";
+import { dispatchDataChanged, formatDate, normaliseText, todayIso } from "./utilities.js?v=1.0.2";
 import {
   closeDialog, emptyState, escapeHtml, moduleHeader, notifyError,
   notifySuccess, openDialog, setButtonBusy, statusBadge
-} from "./ui.js?v=1.0.1";
+} from "./ui.js?v=1.0.2";
 
 let state = { students: [], reviews: [], goals: [], selectedStudentId: "" };
 const ratingFields = ["kihon", "kata", "kumite", "fitness", "flexibility", "discipline", "focus", "confidence", "attitude", "effort"];

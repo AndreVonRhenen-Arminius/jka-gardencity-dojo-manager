@@ -1,6 +1,6 @@
 # Change Log
 
-## 1.0.1 — Family dialog reliability fix
+## 1.0.2 — Family dialog reliability fix
 
 - Fixed the Create Family button by removing invalid nested HTML forms.
 - Changed family and guardian save actions to proper form submission events.

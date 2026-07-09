@@ -1,21 +1,25 @@
-# Validation — v1.0.0
+# Validation — v1.0.2
 
-Completed before packaging:
+Completed against the installed Stage 2 database scripts:
 
-- JavaScript syntax validation passed for every module and the service worker.
-- The web manifest parses as valid JSON.
-- Every local JavaScript import resolves to a file in the release.
-- Every service-worker app-shell file exists.
-- The login page and complete module import graph load in headless Chromium.
-- The patch excludes `config.js`.
-- The patch contains no Supabase service-role key, Microsoft client secret,
-  database password, banking password, PIN or card credential.
-- The patch uses the separate JKA Supabase project configuration already live.
-- The service-worker cache is unique to version 1.0.0.
-- No household Finance PWA records or configuration are included.
-- Existing Stage 2 tables, functions, triggers and RLS policies cover this release;
-  no database migration is required.
+- JavaScript syntax: passed for every module and the service worker.
+- Module import graph: passed.
+- Service-worker app-shell files: passed.
+- Manifest JSON: passed.
+- HTML dialog structure: passed; no nested outer dialog form.
+- Database table references: passed against all 70 installed public tables.
+- Explicit selected columns: passed.
+- Filter and ordering columns: passed.
+- Direct insert, update and upsert fields: passed.
+- Supabase RPC names and parameter names: passed.
+- Hard-coded filtered status values: passed against database constraints.
+- Backup table list: passed against installed table names.
+- `config.js` exclusion: passed.
+- Secret-key scan: passed.
+- Household Finance configuration exclusion: passed.
 
-Operational testing with fictional records is still required after deployment,
-because live Supabase permissions and browser installation behaviour can only be
-fully confirmed in the deployed environment.
+Corrected issue:
+
+- `belt_ranks.display_order` changed to `belt_ranks.rank_order` in Students and Gradings.
+
+Static validation substantially reduces schema and loading errors, but live browser operations, Row Level Security and real Supabase writes must still be confirmed after deployment using fictional records.

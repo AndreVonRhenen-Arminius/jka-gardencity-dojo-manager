@@ -1,9 +1,9 @@
-import { getSupabaseClient } from "./database.js?v=1.0.1";
-import { dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.0.1";
+import { getSupabaseClient } from "./database.js?v=1.0.2";
+import { dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.0.2";
 import {
   closeDialog, emptyState, escapeHtml, moduleHeader, notifyError,
   notifySuccess, openDialog, setButtonBusy, statusBadge
-} from "./ui.js?v=1.0.1";
+} from "./ui.js?v=1.0.2";
 
 let state = { events: [], records: [], students: [], belts: [], feeSchedules: [], feeItems: [] };
 
@@ -18,7 +18,7 @@ async function refresh() {
     supabase.from("grading_events").select("*").is("deleted_at", null).order("grading_date", { ascending: false }),
     supabase.from("grading_records").select("*").is("deleted_at", null).order("grading_date", { ascending: false }).limit(150),
     supabase.from("students").select("id,student_number,first_name,last_name,preferred_name,family_id,current_belt_rank_id,status").is("deleted_at", null).order("last_name"),
-    supabase.from("belt_ranks").select("*").eq("is_active", true).order("display_order"),
+    supabase.from("belt_ranks").select("*").eq("is_active", true).order("rank_order"),
     supabase.from("fee_schedules").select("*").is("deleted_at", null).order("version_number", { ascending: false }),
     supabase.from("fee_schedule_items").select("*").is("deleted_at", null).order("fee_name")
   ]);

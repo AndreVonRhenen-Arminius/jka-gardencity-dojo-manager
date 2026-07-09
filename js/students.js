@@ -1,7 +1,7 @@
-import { getSupabaseClient } from "./database.js?v=1.0.1";
-import { calculateAge, dispatchDataChanged, normaliseText, nowIso, todayIso } from "./utilities.js?v=1.0.1";
-import { closeDialog, confirmAction, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.0.1";
-import { openStudentRecords } from "./student-records.js?v=1.0.1";
+import { getSupabaseClient } from "./database.js?v=1.0.2";
+import { calculateAge, dispatchDataChanged, normaliseText, nowIso, todayIso } from "./utilities.js?v=1.0.2";
+import { closeDialog, confirmAction, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.0.2";
+import { openStudentRecords } from "./student-records.js?v=1.0.2";
 
 let state = { students: [], families: [], belts: [] };
 
@@ -15,7 +15,7 @@ async function refresh() {
   const [studentsResult, familiesResult, beltsResult] = await Promise.all([
     supabase.from("students").select("*").is("deleted_at", null).order("last_name").order("first_name"),
     supabase.from("families").select("id,family_name").is("deleted_at", null).order("family_name"),
-    supabase.from("belt_ranks").select("id,rank_name,belt_colour,display_order").eq("is_active", true).order("display_order")
+    supabase.from("belt_ranks").select("id,rank_name,belt_colour,rank_order").eq("is_active", true).order("rank_order")
   ]);
   if (studentsResult.error) throw studentsResult.error;
   if (familiesResult.error) throw familiesResult.error;

@@ -1,6 +1,6 @@
-import { getSupabaseClient } from "./database.js?v=1.0.1";
-import { dispatchDataChanged, normaliseText, nowIso } from "./utilities.js?v=1.0.1";
-import { closeDialog, confirmAction, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy } from "./ui.js?v=1.0.1";
+import { getSupabaseClient } from "./database.js?v=1.0.2";
+import { dispatchDataChanged, normaliseText, nowIso } from "./utilities.js?v=1.0.2";
+import { closeDialog, confirmAction, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy } from "./ui.js?v=1.0.2";
 
 let state = { families: [], guardians: [], links: [] };
 

@@ -1,5 +1,5 @@
-import { getSupabaseClient } from "./database.js?v=1.0.1";
-import { formatDate, setText, todayIso, readableError } from "./utilities.js?v=1.0.1";
+import { getSupabaseClient } from "./database.js?v=1.0.2";
+import { formatDate, setText, todayIso, readableError } from "./utilities.js?v=1.0.2";
 
 async function countRows(table, configure) {
   const supabase = getSupabaseClient();

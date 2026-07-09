@@ -1,4 +1,4 @@
-import { CONFIG, isConfigurationReady } from "./utilities.js?v=1.0.1";
+import { CONFIG, isConfigurationReady } from "./utilities.js?v=1.0.2";
 
 let client;
 
@@ -23,7 +23,7 @@ export function getSupabaseClient() {
       },
       global: {
         headers: {
-          "X-Client-Info": `${CONFIG.appId}/1.0.0`
+          "X-Client-Info": `${CONFIG.appId}/1.0.2`
         }
       }
     }

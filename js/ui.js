@@ -1,4 +1,4 @@
-import { readableError, showToast } from "./utilities.js?v=1.0.1";
+import { readableError, showToast } from "./utilities.js?v=1.0.2";
 
 export function escapeHtml(value) {
   return String(value ?? "")

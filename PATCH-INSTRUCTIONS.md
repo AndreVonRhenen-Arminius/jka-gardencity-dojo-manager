@@ -1,12 +1,16 @@
-# JKA Dojo Manager Fix — v1.0.1
+# JKA Dojo Manager Schema Fix — v1.0.2
 
-This patch fixes the Family form and prevents accidental dialog closure.
+This patch upgrades the working version 1.0.1 installation.
 
-## Important
+## What it fixes
 
-- The ZIP does not contain `config.js`.
-- Your Supabase publishable key remains unchanged.
-- No SQL needs to be run.
+The installed database uses the belt-rank column `rank_order`. The app was attempting to read and sort by `display_order`, which does not exist. Version 1.0.2 corrects Students and Gradings to use the installed schema.
+
+The patch also retains the version 1.0.1 family-dialog fixes:
+
+- Create Family submits correctly.
+- Errors appear inside the dialog.
+- Clicking outside the dialog does not discard entered information.
 
 ## Upload
 
@@ -14,23 +18,26 @@ This patch fixes the Family form and prevents accidental dialog closure.
 2. Open the GitHub repository `jka-gardencity-dojo-manager`.
 3. Select **Add file → Upload files**.
 4. Upload everything inside the extracted folder.
-5. Commit directly to `main` using:
+5. Use the commit message:
 
-   `Fix family creation dialog v1.0.1`
+   `Fix schema compatibility and validate app v1.0.2`
 
-6. Wait for the GitHub Pages deployment to show a green tick.
+6. Commit directly to `main`.
+7. Wait for the GitHub Pages deployment to show a green tick.
 
-## Refresh and test
+## Refresh
 
-1. Close all browser and installed-app windows for Dojo Manager.
+1. Close all Dojo Manager browser tabs and installed-app windows.
 2. Open:
 
-   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.0.1`
+   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.0.2`
 
 3. Press `Ctrl + F5` once.
-4. Confirm the version shows `1.0.1`.
-5. Open **Families & Guardians → Add family**.
-6. Click beside the dialog and confirm it stays open.
-7. Create a fictional family and confirm it appears in the list.
+4. Confirm the bottom-left corner shows **Version 1.0.2**.
+5. Open Students and Gradings and confirm both pages load.
 
-If Supabase rejects the save, the exact error now appears inside the dialog.
+## Important
+
+- No SQL needs to be run.
+- `config.js` is not included, so the working Supabase publishable key is preserved.
+- Test with fictional records before entering real medical, financial or banking data.

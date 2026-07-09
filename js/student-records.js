@@ -1,6 +1,6 @@
-import { getSupabaseClient } from "./database.js?v=1.0.1";
-import { formatDate, normaliseText, todayIso } from "./utilities.js?v=1.0.1";
-import { closeDialog, escapeHtml, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.0.1";
+import { getSupabaseClient } from "./database.js?v=1.0.2";
+import { formatDate, normaliseText, todayIso } from "./utilities.js?v=1.0.2";
+import { closeDialog, escapeHtml, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.0.2";
 
 export async function openStudentRecords(student) {
   try {
