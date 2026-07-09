@@ -1,5 +1,5 @@
 import { renderSettings } from "./settings.js?v=1.1.0";
-import { renderFamilies } from "./families.js?v=1.1.0";
+import { renderFamilies } from "./families.js?v=1.1.1";
 import { renderStudents } from "./students.js?v=1.1.0";
 import { renderEnquiries } from "./enquiries.js?v=1.1.0";
 import { renderTerms } from "./terms.js?v=1.1.0";

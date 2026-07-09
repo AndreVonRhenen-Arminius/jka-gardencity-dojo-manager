@@ -1,5 +1,5 @@
-import { getSupabaseClient } from "./database.js?v=1.1.0";
-import { dispatchDataChanged, normaliseText } from "./utilities.js?v=1.1.0";
+import { getSupabaseClient } from "./database.js?v=1.1.1";
+import { dispatchDataChanged, normaliseText, nowIso } from "./utilities.js?v=1.1.1";
 import {
   closeDialog,
   emptyState,
@@ -9,7 +9,7 @@ import {
   notifySuccess,
   openDialog,
   setButtonBusy
-} from "./ui.js?v=1.1.0";
+} from "./ui.js?v=1.1.1";
 
 let state = { families: [], guardians: [], links: [], students: [] };
 
@@ -66,6 +66,7 @@ function render(container) {
           <button class="button button-primary button-small" data-action="open-students">Open Student Hub</button>
           <button class="button button-secondary button-small" data-action="edit-family" data-id="${family.id}">Advanced family edit</button>
           <button class="button button-secondary button-small" data-action="add-guardian" data-id="${family.id}">Add another guardian</button>
+          <button class="button button-danger button-small" data-action="delete-family" data-id="${family.id}">Delete family</button>
         </td>
       </tr>`;
   }).join("");
@@ -132,6 +133,7 @@ function handleTableAction(event) {
   if (!family) return;
   if (button.dataset.action === "edit-family") openFamilyDialog(family);
   if (button.dataset.action === "add-guardian") openGuardianDialog(family);
+  if (button.dataset.action === "delete-family") prepareFamilyDeletion(family);
 }
 
 function openFamilyDialog(family) {
@@ -305,6 +307,262 @@ async function saveGuardian(event) {
     dispatchDataChanged({ module: "families" });
   } catch (error) {
     notifyError(error);
+  } finally {
+    setButtonBusy(button, false);
+  }
+}
+
+const FAMILY_DEPENDENCIES = [
+  ["students", "Students"],
+  ["charges", "Charges"],
+  ["payments", "Payments"],
+  ["invoices", "Invoices"],
+  ["refunds", "Refunds"],
+  ["financial_adjustments", "Financial adjustments"],
+  ["charge_batch_items", "Charge batches"],
+  ["communication_history", "Communication history"],
+  ["follow_up_tasks", "Follow-up tasks"],
+  ["student_discounts", "Family discounts"]
+];
+
+async function countActiveRows(table, familyId) {
+  const supabase = getSupabaseClient();
+  let query = supabase
+    .from(table)
+    .select("id", { count: "exact", head: true })
+    .eq("family_id", familyId);
+
+  // All dependency tables in this database use deleted_at.
+  query = query.is("deleted_at", null);
+
+  const { count, error } = await query;
+  if (error) throw error;
+  return Number(count || 0);
+}
+
+async function prepareFamilyDeletion(family) {
+  const linkedStudents = state.students.filter(student => student.family_id === family.id);
+
+  openDialog({
+    title: `Checking ${family.family_name}`,
+    eyebrow: "Families & Guardians",
+    body: '<div class="loading-state">Checking linked students and financial history…</div>',
+    footer: '<button class="button button-secondary" type="button" data-close-dialog>Cancel</button>'
+  });
+  document.querySelector("[data-close-dialog]")?.addEventListener("click", closeDialog);
+
+  try {
+    const dependencyCounts = await Promise.all(
+      FAMILY_DEPENDENCIES.map(async ([table, label]) => ({
+        table,
+        label,
+        count: table === "students"
+          ? linkedStudents.length
+          : await countActiveRows(table, family.id)
+      }))
+    );
+
+    const blockers = dependencyCounts.filter(item => item.count > 0);
+    if (blockers.length) {
+      showDeletionBlocked(family, blockers);
+      return;
+    }
+
+    showDeleteConfirmation(family);
+  } catch (error) {
+    const body = document.getElementById("dialogBody");
+    if (body) {
+      body.innerHTML = `
+        <div class="inline-message error">
+          The family could not be checked safely. No information was deleted.<br><br>
+          ${escapeHtml(error.message || String(error))}
+        </div>`;
+    }
+    notifyError(error);
+  }
+}
+
+function showDeletionBlocked(family, blockers) {
+  const details = blockers
+    .map(item => `<li><strong>${escapeHtml(item.label)}:</strong> ${item.count}</li>`)
+    .join("");
+
+  openDialog({
+    title: `Cannot delete ${family.family_name}`,
+    eyebrow: "Families & Guardians",
+    body: `
+      <div class="inline-message error">
+        This family still has linked records. It has not been deleted.
+      </div>
+      <div class="section-card section-spacer">
+        <h3>Linked records</h3>
+        <ul>${details}</ul>
+        <p class="muted">
+          Reassign or archive linked students first. Financial and communication
+          history must remain linked for accurate records.
+        </p>
+      </div>`,
+    footer: `
+      <button class="button button-secondary" type="button" data-close-dialog>Close</button>
+      <button class="button button-primary" type="button" data-open-student-hub>Open Student Hub</button>`
+  });
+
+  document.querySelector("[data-close-dialog]")?.addEventListener("click", closeDialog);
+  document.querySelector("[data-open-student-hub]")?.addEventListener("click", () => {
+    closeDialog();
+    openStudentHub();
+  });
+}
+
+function showDeleteConfirmation(family) {
+  const linkedGuardianIds = state.links
+    .filter(link => link.family_id === family.id)
+    .map(link => link.guardian_id);
+
+  const linkedGuardians = state.guardians.filter(guardian =>
+    linkedGuardianIds.includes(guardian.id)
+  );
+
+  openDialog({
+    title: `Delete ${family.family_name}`,
+    eyebrow: "Families & Guardians",
+    body: `
+      <div class="inline-message warning">
+        This will remove the family from the active directory and move it to the
+        recycle bin. It can be restored later from Audit History.
+      </div>
+      <div class="section-card section-spacer">
+        <p><strong>Family:</strong> ${escapeHtml(family.family_name)}</p>
+        <p><strong>Billing name:</strong> ${escapeHtml(family.billing_name || "—")}</p>
+        <p><strong>Linked guardians:</strong> ${linkedGuardians.length}</p>
+      </div>
+      <label class="checkbox-row section-spacer">
+        <input id="cleanupOrphanGuardians" type="checkbox" checked>
+        <span>
+          Also archive guardians who are not linked to another family or student
+        </span>
+      </label>
+      <p class="muted">
+        Shared guardians are preserved automatically. This action is available
+        only when there are no linked students, charges, payments, invoices or
+        other history.
+      </p>`,
+    footer: `
+      <button class="button button-secondary" type="button" data-close-dialog>Cancel</button>
+      <button id="confirmDeleteFamilyButton" class="button button-danger" type="button">
+        Delete family
+      </button>`
+  });
+
+  document.querySelector("[data-close-dialog]")?.addEventListener("click", closeDialog);
+  document.getElementById("confirmDeleteFamilyButton")
+    ?.addEventListener("click", event => deleteFamily(family, event.currentTarget));
+}
+
+async function deleteFamily(family, button) {
+  setButtonBusy(button, true, "Deleting…");
+
+  try {
+    // Recheck immediately before deletion to avoid deleting a family that gained
+    // a linked record while the confirmation window was open.
+    const dependencyCounts = await Promise.all(
+      FAMILY_DEPENDENCIES.map(async ([table, label]) => ({
+        label,
+        count: table === "students"
+          ? state.students.filter(student => student.family_id === family.id).length
+          : await countActiveRows(table, family.id)
+      }))
+    );
+
+    const blockers = dependencyCounts.filter(item => item.count > 0);
+    if (blockers.length) {
+      showDeletionBlocked(family, blockers);
+      return;
+    }
+
+    const supabase = getSupabaseClient();
+    const linkedGuardianIds = state.links
+      .filter(link => link.family_id === family.id)
+      .map(link => link.guardian_id);
+
+    const { error: familyError } = await supabase
+      .from("families")
+      .update({
+        deleted_at: nowIso(),
+        is_active: false,
+        primary_guardian_id: null
+      })
+      .eq("id", family.id)
+      .is("deleted_at", null);
+
+    if (familyError) throw familyError;
+
+    const { error: unlinkError } = await supabase
+      .from("guardian_families")
+      .delete()
+      .eq("family_id", family.id);
+
+    if (unlinkError) throw unlinkError;
+
+    const cleanGuardians = document.getElementById("cleanupOrphanGuardians")?.checked;
+    let archivedGuardians = 0;
+
+    if (cleanGuardians) {
+      for (const guardianId of linkedGuardianIds) {
+        const [
+          { count: otherFamilyLinks, error: familyLinkError },
+          { count: studentLinks, error: studentLinkError }
+        ] = await Promise.all([
+          supabase
+            .from("guardian_families")
+            .select("id", { count: "exact", head: true })
+            .eq("guardian_id", guardianId),
+          supabase
+            .from("student_guardians")
+            .select("id", { count: "exact", head: true })
+            .eq("guardian_id", guardianId)
+        ]);
+
+        if (familyLinkError) throw familyLinkError;
+        if (studentLinkError) throw studentLinkError;
+
+        if (Number(otherFamilyLinks || 0) === 0 && Number(studentLinks || 0) === 0) {
+          const { error: guardianError } = await supabase
+            .from("guardians")
+            .update({
+              deleted_at: nowIso(),
+              is_active: false
+            })
+            .eq("id", guardianId)
+            .is("deleted_at", null);
+
+          if (guardianError) throw guardianError;
+          archivedGuardians += 1;
+        }
+      }
+    }
+
+    closeDialog();
+    await refresh();
+    render(document.getElementById("moduleContent"));
+
+    notifySuccess(
+      archivedGuardians
+        ? `Family deleted. ${archivedGuardians} unlinked guardian record${archivedGuardians === 1 ? "" : "s"} also archived.`
+        : "Family deleted and moved to the recycle bin."
+    );
+    dispatchDataChanged({ module: "families" });
+  } catch (error) {
+    notifyError(error);
+    const body = document.getElementById("dialogBody");
+    if (body) {
+      body.insertAdjacentHTML(
+        "afterbegin",
+        `<div class="inline-message error">
+          The family was not fully deleted. ${escapeHtml(error.message || String(error))}
+        </div>`
+      );
+    }
   } finally {
     setButtonBusy(button, false);
   }

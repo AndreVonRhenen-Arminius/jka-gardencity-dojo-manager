@@ -1,64 +1,44 @@
-# Upgrade Instructions — Student Hub v1.1.0
+# Upgrade Instructions — v1.1.1
 
-This patch upgrades the working JKA GardenCity Dojo Manager v1.0.2 installation.
+This patch adds safe family deletion to the working Student Hub release.
 
 ## Important
 
-- The ZIP deliberately does **not** contain `config.js`.
-- Your Supabase publishable key and working Microsoft login configuration are preserved.
+- The ZIP does not contain `config.js`.
+- Your Supabase key and Microsoft login settings will not be overwritten.
 - No SQL needs to be run.
-- Upload the extracted contents, not the ZIP file itself.
 
-## Upload to GitHub
+## Upload
 
-1. Extract `JKA-Dojo-Manager-Student-Hub-v1.1.0.zip`.
+1. Extract the ZIP.
 2. Open the GitHub repository `jka-gardencity-dojo-manager`.
-3. Open **Code**.
-4. Select **Add file → Upload files**.
-5. Select everything inside the extracted patch folder.
-6. Upload the selected files and folders.
-7. Use the commit message:
+3. Select **Add file → Upload files**.
+4. Upload everything inside the extracted folder.
+5. Use commit message:
 
-   `Add linked Student Hub and email drafts v1.1.0`
+   `Add safe family deletion v1.1.1`
 
-8. Commit directly to `main`.
-9. Open **Actions** and wait for the Pages deployment to show a green tick.
+6. Commit directly to `main`.
+7. Wait for the GitHub Pages deployment to show a green tick.
 
-## Load the new release
+## Open the update
 
-1. Close every browser tab and installed Dojo Manager window.
+1. Close all Dojo Manager tabs and installed-app windows.
 2. Open:
 
-   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.1.0`
+   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.1.1`
 
-3. Press `Ctrl + F5` once.
-4. Confirm the bottom-left corner shows **Version 1.1.0**.
+3. Press `Ctrl + F5`.
+4. Confirm the bottom-left version is `1.1.1`.
 
-## New default workflow
+## Delete an accidental family
 
-Use **Student Hub** as the main add and edit section.
+1. Open **Families & Guardians**.
+2. Find the unused family.
+3. Select **Delete family**.
+4. Review the dependency check.
+5. Leave guardian cleanup selected when the guardian is also an unused test record.
+6. Confirm deletion.
 
-1. Select **Add student & family**.
-2. Enter student details.
-3. Select an existing family or create a new one in the same form.
-4. Select an existing primary guardian or create one in the same form.
-5. Save once.
-6. The same linked record appears automatically in all other modules.
-
-Use **Profile & missing info** for:
-
-- emergency contacts
-- protected medical information
-- student-specific notes
-- attendance safety alerts
-- automatic missing-information email drafts
-
-Use **Families & Guardians** mainly as a linked directory or to add an additional guardian.
-
-## Test with fictional records first
-
-1. Create a fictional student with a new family and guardian.
-2. Confirm the student appears in Attendance, Gradings, Progress, Fees, Reports and Communication.
-3. Edit the guardian email in Student Hub.
-4. Confirm the updated email appears in the student profile and invoice-related views.
-5. Leave several fields blank and test the automatic missing-information email draft.
+A family with students or historical records will not be deleted. Archived families
+can be recovered through Audit History.

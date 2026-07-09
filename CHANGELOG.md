@@ -1,29 +1,20 @@
 # Change Log
 
-## 1.1.0 — Linked Student Hub and missing-information email drafts
+## 1.1.1 — Safe family deletion
 
-- Renamed Students to **Student Hub** and made it the default source of truth.
-- Added one guided master form for the student, family, billing details and primary guardian.
-- Linked the student record to Attendance, Gradings, Progress, Fees, Payments, Invoices, Banking, Reports and Communication through the existing database IDs.
-- Added automatic guardian-to-family and guardian-to-student synchronisation.
-- Added family and guardian duplicate checks using student names, dates of birth, family names, email addresses and mobile numbers.
-- Changed Families & Guardians into a linked directory with Student Hub as the preferred editor.
-- Retained advanced family editing and additional-guardian linking for exceptional cases.
-- Added profile completeness scoring to the Student Hub list.
-- Added a missing-information checklist to each student profile.
-- Added automatic parent or guardian email drafts based on the exact missing information.
-- Added Copy email, Open in email app, and Log request with seven-day follow-up actions.
-- Added explicit Granted, Declined and Not confirmed photography-consent choices.
-- Preserved protected medical, emergency-contact, note and safety-alert sections inside Student Hub.
-- No database migration is required.
-- The patch excludes `config.js` and does not change the working Microsoft authentication configuration.
+- Added a **Delete family** action to Families & Guardians.
+- Empty or accidental family records can be moved to the recycle bin.
+- Deletion is blocked when students, charges, payments, invoices, follow-ups,
+  communication history, discounts or other linked history exist.
+- Added a second dependency check immediately before deletion.
+- Added optional cleanup of guardians who are not linked to another family
+  or student.
+- Shared guardians are preserved automatically.
+- Deleted families remain recoverable through Audit History.
+- Updated the PWA cache version to 1.1.1.
 
-## 1.0.2 — Schema compatibility correction
+## 1.1.0 — Linked Student Hub
 
-- Corrected belt-rank ordering to use `rank_order`.
-- Validated application queries and mutations against the installed Stage 2 schema.
-
-## 1.0.1 — Family dialog correction
-
-- Corrected family and guardian form submission.
-- Prevented accidental backdrop clicks from closing forms.
+- Added the Student Hub as the default editor.
+- Added linked family and guardian information.
+- Added missing-information email drafts.
