@@ -1,14 +1,21 @@
-# Validation — v0.4.0
+# Validation — v1.0.0
 
-Validated before packaging:
+Completed before packaging:
 
-- `index.html` contains HTML.
-- `manifest.webmanifest` parses as JSON.
-- `css/styles.css` contains the dark charcoal and JKA red interface.
-- JavaScript module files pass syntax validation.
-- `sw.js` uses the unique dojo cache `jka-dojo-manager-v0.4.0`.
-- The patch does not include `config.js`.
-- No service-role key, Microsoft secret, database password or banking credential is included.
-- No household finance records or household configuration are included.
-- Microsoft login remains configured for the working personal-account flow.
-- Existing Stage 2 tables and Row Level Security policies are used; no database migration is required.
+- JavaScript syntax validation passed for every module and the service worker.
+- The web manifest parses as valid JSON.
+- Every local JavaScript import resolves to a file in the release.
+- Every service-worker app-shell file exists.
+- The login page and complete module import graph load in headless Chromium.
+- The patch excludes `config.js`.
+- The patch contains no Supabase service-role key, Microsoft client secret,
+  database password, banking password, PIN or card credential.
+- The patch uses the separate JKA Supabase project configuration already live.
+- The service-worker cache is unique to version 1.0.0.
+- No household Finance PWA records or configuration are included.
+- Existing Stage 2 tables, functions, triggers and RLS policies cover this release;
+  no database migration is required.
+
+Operational testing with fictional records is still required after deployment,
+because live Supabase permissions and browser installation behaviour can only be
+fully confirmed in the deployed environment.

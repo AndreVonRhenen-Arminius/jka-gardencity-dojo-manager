@@ -1,6 +1,6 @@
-import { getSupabaseClient } from "./database.js?v=0.4.0";
-import { dispatchDataChanged, normaliseText, nowIso } from "./utilities.js?v=0.4.0";
-import { closeDialog, confirmAction, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy } from "./ui.js?v=0.4.0";
+import { getSupabaseClient } from "./database.js?v=1.0.1";
+import { dispatchDataChanged, normaliseText, nowIso } from "./utilities.js?v=1.0.1";
+import { closeDialog, confirmAction, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy } from "./ui.js?v=1.0.1";
 
 let state = { families: [], guardians: [], links: [] };
 
@@ -89,15 +89,17 @@ function openFamilyDialog(family = null) {
       </form>`,
     footer: `
       <button class="button button-secondary" type="button" data-close-dialog>Cancel</button>
-      <button id="saveFamilyButton" class="button button-primary" type="button">${family ? "Save changes" : "Create family"}</button>`
+      <button id="saveFamilyButton" class="button button-primary" type="submit" form="familyForm">${family ? "Save changes" : "Create family"}</button>`
   });
-  document.querySelector("[data-close-dialog]").addEventListener("click", closeDialog);
-  document.getElementById("saveFamilyButton").addEventListener("click", saveFamily);
+  const dialog = document.getElementById("appDialog");
+  dialog.querySelector("[data-close-dialog]").addEventListener("click", closeDialog);
+  dialog.querySelector("#familyForm").addEventListener("submit", saveFamily);
 }
 
 async function saveFamily(event) {
-  const button = event.currentTarget;
-  const form = document.getElementById("familyForm");
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = document.getElementById("saveFamilyButton");
   if (!form.reportValidity()) return;
   setButtonBusy(button, true);
   try {
@@ -141,15 +143,17 @@ function openGuardianDialog(family) {
       </form>`,
     footer: `
       <button class="button button-secondary" type="button" data-close-dialog>Cancel</button>
-      <button id="saveGuardianButton" class="button button-primary" type="button">Add guardian</button>`
+      <button id="saveGuardianButton" class="button button-primary" type="submit" form="guardianForm">Add guardian</button>`
   });
-  document.querySelector("[data-close-dialog]").addEventListener("click", closeDialog);
-  document.getElementById("saveGuardianButton").addEventListener("click", saveGuardian);
+  const dialog = document.getElementById("appDialog");
+  dialog.querySelector("[data-close-dialog]").addEventListener("click", closeDialog);
+  dialog.querySelector("#guardianForm").addEventListener("submit", saveGuardian);
 }
 
 async function saveGuardian(event) {
-  const button = event.currentTarget;
-  const form = document.getElementById("guardianForm");
+  event.preventDefault();
+  const form = event.currentTarget;
+  const button = document.getElementById("saveGuardianButton");
   if (!form.reportValidity()) return;
   setButtonBusy(button, true);
   try {

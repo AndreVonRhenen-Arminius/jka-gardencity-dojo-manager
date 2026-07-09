@@ -1,6 +1,7 @@
-import { getSupabaseClient } from "./database.js?v=0.4.0";
-import { calculateAge, dispatchDataChanged, normaliseText, nowIso, todayIso } from "./utilities.js?v=0.4.0";
-import { closeDialog, confirmAction, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=0.4.0";
+import { getSupabaseClient } from "./database.js?v=1.0.1";
+import { calculateAge, dispatchDataChanged, normaliseText, nowIso, todayIso } from "./utilities.js?v=1.0.1";
+import { closeDialog, confirmAction, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.0.1";
+import { openStudentRecords } from "./student-records.js?v=1.0.1";
 
 let state = { students: [], families: [], belts: [] };
 
@@ -14,7 +15,7 @@ async function refresh() {
   const [studentsResult, familiesResult, beltsResult] = await Promise.all([
     supabase.from("students").select("*").is("deleted_at", null).order("last_name").order("first_name"),
     supabase.from("families").select("id,family_name").is("deleted_at", null).order("family_name"),
-    supabase.from("belt_ranks").select("id,rank_name,belt_colour,rank_order").eq("is_active", true).order("rank_order")
+    supabase.from("belt_ranks").select("id,rank_name,belt_colour,display_order").eq("is_active", true).order("display_order")
   ]);
   if (studentsResult.error) throw studentsResult.error;
   if (familiesResult.error) throw familiesResult.error;
@@ -37,6 +38,7 @@ function render(container) {
         <td>${statusBadge(student.status)}</td>
         <td>${escapeHtml(student.payment_plan || "—")}</td>
         <td class="table-actions">
+          <button class="button button-secondary button-small" data-action="details" data-id="${student.id}">Details</button>
           <button class="button button-secondary button-small" data-action="edit" data-id="${student.id}">Edit</button>
           <button class="button button-danger button-small" data-action="archive" data-id="${student.id}">Archive</button>
         </td>
@@ -72,6 +74,7 @@ function handleAction(event) {
   if (!button) return;
   const student = state.students.find(item => item.id === button.dataset.id);
   if (!student) return;
+  if (button.dataset.action === "details") openStudentRecords(student);
   if (button.dataset.action === "edit") openStudentDialog(student);
   if (button.dataset.action === "archive") archiveStudent(student);
 }
@@ -150,14 +153,38 @@ async function saveStudent(event) {
 
     const supabase = getSupabaseClient();
     let result;
+    let studentId = id;
     if (id) {
-      result = await supabase.from("students").update(row).eq("id", id);
+      result = await supabase.from("students").update(row).eq("id", id).select("id").single();
     } else {
       const { data: studentNumber, error: numberError } = await supabase.rpc("next_student_number");
       if (numberError) throw numberError;
-      result = await supabase.from("students").insert({ ...row, student_number: studentNumber });
+      result = await supabase.from("students").insert({ ...row, student_number: studentNumber }).select("id").single();
     }
     if (result.error) throw result.error;
+    studentId = result.data?.id || studentId;
+
+    if (studentId && row.family_id) {
+      const { data: guardianLinks, error: guardianLinkError } = await supabase
+        .from("guardian_families")
+        .select("guardian_id,is_primary_billing_contact")
+        .eq("family_id", row.family_id);
+      if (guardianLinkError) throw guardianLinkError;
+      if (guardianLinks?.length) {
+        const studentGuardianRows = guardianLinks.map(link => ({
+          student_id: studentId,
+          guardian_id: link.guardian_id,
+          relationship_to_student: "Guardian",
+          is_primary_contact: Boolean(link.is_primary_billing_contact),
+          is_emergency_contact: Boolean(link.is_primary_billing_contact),
+          authorised_to_collect: true
+        }));
+        const { error: studentGuardianError } = await supabase
+          .from("student_guardians")
+          .upsert(studentGuardianRows, { onConflict: "student_id,guardian_id" });
+        if (studentGuardianError) throw studentGuardianError;
+      }
+    }
 
     closeDialog();
     await refresh();

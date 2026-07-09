@@ -1,68 +1,50 @@
 # JKA GardenCity Dojo Manager
 
-Secure, installable Progressive Web App for **JKA Christchurch – GardenCity**.
+A secure, installable Progressive Web App for **JKA Christchurch – GardenCity**.
 
-## Starter release
+## Release
 
-Version **0.4.0** provides:
+Version **1.0.0** completes the approved dojo-management scope.
 
-- Microsoft sign-in through the separate dojo Supabase project
-- Authorised-user allowlist enforcement
-- Administrator role detection
-- Dark charcoal and JKA red interface
-- Dashboard shell with live database counts
-- Grouped navigation for dojo administration and finances
-- 30-minute inactivity sign-out
-- PWA manifest and service worker
-- Separate browser storage, cache and configuration identifiers
+## Functional areas
+
+- Dashboard
+- Students and protected student records
+- Families and guardians
+- Enquiries and trials
+- Attendance
+- Terms and training sessions
+- Gradings
+- Progress and goals
+- Fees, charges and ledgers
+- Payments, allocations, receipts and invoices
+- Expenses and recurring expenses
+- Banking imports, matching and reconciliation
+- Reports and CSV export
+- Communication history and follow-ups
+- Encrypted backup and controlled restore
+- Audit history, recycle bin and conflict review
+- Dojo settings and authorised-user management
+- PWA installation
+
+## Security
+
+- Microsoft authentication through the separate dojo Supabase project
+- Application allowlist and role checks
+- Row Level Security on all public application tables
+- Protected medical information
+- Audit history for important changes
+- Thirty-minute default inactivity sign-out, configurable in Settings
+- No service-role key or Microsoft client secret in browser code
 - No connection to Fortnight Finance
 
-The business modules are intentionally presented as secured shells in this starter release. They will be implemented in controlled stages.
+## Upgrade
 
-## Required configuration
+This release is supplied as an upgrade patch. It deliberately excludes
+`config.js`, so the working live Supabase URL and publishable key are preserved.
 
-Open `config.js` and replace:
+See:
 
-```text
-PASTE_DOJO_SUPABASE_PUBLISHABLE_KEY_HERE
-```
-
-with the **publishable key** from the new dojo Supabase project.
-
-Do not use:
-
-- the service-role key
-- a Microsoft client secret
-- the database password
-- any household Supabase key
-
-## Deployment
-
-Upload the contents of this folder to the root of:
-
-`jka-gardencity-dojo-manager`
-
-Then enable GitHub Pages from:
-
-- Branch: `main`
-- Folder: `/(root)`
-
-Published URL:
-
-`https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/`
-
-See `docs/setup-guide.md`.
-
-
-## Functional modules in v0.4.0
-
-- Settings
-- Families and Guardians
-- Students
-- Terms and generated sessions
-- Sessions
-- Attendance
-- Versioned fees and charges
-- Payments and allocations
-- Invoices and printing
-- In-app installation prompt
+- `PATCH-INSTRUCTIONS.md`
+- `docs/USER-GUIDE.md`
+- `docs/FINAL-TEST-CHECKLIST.md`

@@ -1,13 +1,14 @@
-import { CONFIG, isConfigurationReady, readableError, setText, showToast } from "./utilities.js?v=0.4.0";
-import { signInWithMicrosoft, signOut, getCurrentSession, onAuthStateChange, establishAuthorisedSession } from "./auth.js?v=0.4.0";
-import { loadDashboard } from "./dashboard.js?v=0.4.0";
-import { activateNavigation, initialiseNavigation } from "./navigation.js?v=0.4.0";
-import { registerServiceWorker } from "./pwa-updates.js?v=0.4.0";
-import { initialiseInstallExperience } from "./install.js?v=0.4.0";
-import { initialiseDialog } from "./ui.js?v=0.4.0";
-import { loadModule } from "./modules.js?v=0.4.0";
+import { CONFIG, isConfigurationReady, readableError, setText, showToast } from "./utilities.js?v=1.0.1";
+import { signInWithMicrosoft, signOut, getCurrentSession, onAuthStateChange, establishAuthorisedSession } from "./auth.js?v=1.0.1";
+import { loadDashboard } from "./dashboard.js?v=1.0.1";
+import { activateNavigation, initialiseNavigation } from "./navigation.js?v=1.0.1";
+import { registerServiceWorker } from "./pwa-updates.js?v=1.0.1";
+import { initialiseInstallExperience } from "./install.js?v=1.0.1";
+import { initialiseDialog } from "./ui.js?v=1.0.1";
+import { loadModule } from "./modules.js?v=1.0.1";
+import { getSupabaseClient } from "./database.js?v=1.0.1";
 
-const BUILD_VERSION = "0.4.0";
+const BUILD_VERSION = "1.0.1";
 const loginView = document.getElementById("loginView");
 const appShell = document.getElementById("appShell");
 const loginStatus = document.getElementById("loginStatus");
@@ -20,6 +21,7 @@ let inactivityTimer;
 let currentSessionId;
 let pendingLoginMessage = "";
 let currentPage = "dashboard";
+let runtimeInactivityMinutes = Number(CONFIG.inactivityMinutes || 30);
 
 async function initialise() {
   setText("versionLabel", BUILD_VERSION);
@@ -41,7 +43,8 @@ async function initialise() {
   signInButton.addEventListener("click", handleSignIn);
   signOutButton.addEventListener("click", handleSignOut);
   refreshDashboardButton.addEventListener("click", loadDashboardSafely);
-  window.addEventListener("dojo:data-changed", () => {
+  window.addEventListener("dojo:data-changed", async event => {
+    if (event.detail?.module === "settings") await loadRuntimePreferences();
     if (currentPage === "dashboard") loadDashboardSafely();
   });
 
@@ -109,6 +112,7 @@ async function handleAuthenticatedSession(session) {
     setText("userRole", identity.role);
     pendingLoginMessage = "";
     showApp();
+    await loadRuntimePreferences();
     resetInactivityTimer();
     await navigate(new URL(window.location.href).searchParams.get("page") || "dashboard");
   } catch (error) {
@@ -154,6 +158,28 @@ async function loadDashboardSafely() {
   }
 }
 
+
+async function loadRuntimePreferences() {
+  try {
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase
+      .from("app_settings")
+      .select("setting_value")
+      .eq("setting_key", "security.inactivity_timeout_minutes")
+      .maybeSingle();
+
+    if (error) throw error;
+
+    const configured = Number(data?.setting_value);
+    runtimeInactivityMinutes = Number.isFinite(configured)
+      ? Math.min(Math.max(configured, 5), 240)
+      : Number(CONFIG.inactivityMinutes || 30);
+  } catch (error) {
+    console.warn("Could not load the runtime inactivity preference:", error);
+    runtimeInactivityMinutes = Number(CONFIG.inactivityMinutes || 30);
+  }
+}
+
 function initialiseConnectivity() {
   const update = () => {
     const online = navigator.onLine;
@@ -176,7 +202,7 @@ function initialiseInactivitySignOut() {
 function resetInactivityTimer() {
   if (appShell.hidden) return;
   clearTimeout(inactivityTimer);
-  const minutes = Number(CONFIG.inactivityMinutes || 30);
+  const minutes = runtimeInactivityMinutes;
   inactivityTimer = window.setTimeout(async () => {
     showToast("You were signed out after a period of inactivity.", "info");
     await handleSignOut();

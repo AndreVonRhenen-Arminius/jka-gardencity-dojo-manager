@@ -1,4 +1,4 @@
-import { readableError, showToast } from "./utilities.js?v=0.4.0";
+import { readableError, showToast } from "./utilities.js?v=1.0.1";
 
 export function escapeHtml(value) {
   return String(value ?? "")
@@ -40,10 +40,16 @@ export function setButtonBusy(button, busy, busyText = "Saving…") {
 
 export function openDialog({ title, eyebrow = "Dojo Manager", body = "", footer = "" }) {
   const dialog = document.getElementById("appDialog");
+  const message = document.getElementById("dialogMessage");
   document.getElementById("dialogTitle").textContent = title;
   document.getElementById("dialogEyebrow").textContent = eyebrow;
   document.getElementById("dialogBody").innerHTML = body;
   document.getElementById("dialogFooter").innerHTML = footer;
+  if (message) {
+    message.hidden = true;
+    message.textContent = "";
+    message.className = "dialog-message";
+  }
   if (!dialog.open) dialog.showModal();
   return dialog;
 }
@@ -56,8 +62,11 @@ export function closeDialog() {
 export function initialiseDialog() {
   const dialog = document.getElementById("appDialog");
   document.getElementById("dialogCloseButton")?.addEventListener("click", closeDialog);
+
+  // Deliberately do not close when the backdrop is clicked. This protects
+  // partially completed forms from accidental clicks outside the dialog.
   dialog?.addEventListener("click", event => {
-    if (event.target === dialog) closeDialog();
+    if (event.target === dialog) event.stopPropagation();
   });
 }
 
@@ -70,7 +79,18 @@ export function notifySuccess(message) {
 }
 
 export function notifyError(error) {
-  showToast(readableError(error), "error", 7000);
+  const messageText = readableError(error);
+  const dialog = document.getElementById("appDialog");
+  const message = document.getElementById("dialogMessage");
+
+  if (dialog?.open && message) {
+    message.textContent = messageText;
+    message.className = "dialog-message error";
+    message.hidden = false;
+    message.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+
+  showToast(messageText, "error", 7000);
 }
 
 export function moduleHeader({ eyebrow, title, description, actions = "" }) {

@@ -1,5 +1,5 @@
-import { getSupabaseClient } from "./database.js?v=0.4.0";
-import { CONFIG, readableError } from "./utilities.js?v=0.4.0";
+import { getSupabaseClient } from "./database.js?v=1.0.1";
+import { CONFIG, readableError } from "./utilities.js?v=1.0.1";
 
 const roleCodes = [
   ["administrator", "Administrator"],

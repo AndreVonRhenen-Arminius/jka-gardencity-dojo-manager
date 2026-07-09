@@ -1,4 +1,5 @@
-const CACHE_NAME = "jka-dojo-manager-v0.4.0";
+const CACHE_NAME = "jka-dojo-manager-v1.0.1";
+
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -17,11 +18,21 @@ const APP_SHELL = [
   "./js/settings.js",
   "./js/families.js",
   "./js/students.js",
+  "./js/student-records.js",
+  "./js/enquiries.js",
   "./js/terms.js",
   "./js/sessions.js",
   "./js/attendance.js",
+  "./js/gradings.js",
+  "./js/progress.js",
   "./js/fees.js",
   "./js/payments.js",
+  "./js/expenses.js",
+  "./js/banking.js",
+  "./js/reports.js",
+  "./js/communication.js",
+  "./js/backup.js",
+  "./js/audit.js",
   "./js/pwa-updates.js",
   "./vendor/supabase.min.js",
   "./assets/icons/icon-192.png",
@@ -40,7 +51,11 @@ self.addEventListener("activate", event => {
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys.filter(key => key.startsWith("jka-dojo-manager-") && key !== CACHE_NAME)
+        keys
+          .filter(key =>
+            key.startsWith("jka-dojo-manager-") &&
+            key !== CACHE_NAME
+          )
           .map(key => caches.delete(key))
       ))
       .then(() => self.clients.claim())
@@ -49,16 +64,23 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
   const request = event.request;
+
   if (request.method !== "GET") return;
+
   const url = new URL(request.url);
+
+  // Supabase data and authentication requests must always use the network.
   if (url.origin.includes("supabase.co")) return;
 
   if (request.mode === "navigate") {
     event.respondWith(
       fetch(request)
         .then(response => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then(cache => cache.put("./index.html", copy));
+          if (response?.ok) {
+            const copy = response.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => cache.put("./index.html", copy));
+          }
           return response;
         })
         .catch(() => caches.match("./index.html"))
@@ -72,7 +94,8 @@ self.addEventListener("fetch", event => {
         .then(response => {
           if (response?.ok) {
             const copy = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(request, copy));
+            caches.open(CACHE_NAME)
+              .then(cache => cache.put(request, copy));
           }
           return response;
         })
@@ -82,5 +105,7 @@ self.addEventListener("fetch", event => {
 });
 
 self.addEventListener("message", event => {
-  if (event.data === "SKIP_WAITING") self.skipWaiting();
+  if (event.data === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
 });

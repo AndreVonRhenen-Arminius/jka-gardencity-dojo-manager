@@ -1,6 +1,6 @@
-import { getSupabaseClient } from "./database.js?v=0.4.0";
-import { datePlusDays, dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=0.4.0";
-import { closeDialog, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=0.4.0";
+import { getSupabaseClient } from "./database.js?v=1.0.1";
+import { datePlusDays, dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.0.1";
+import { closeDialog, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.0.1";
 
 let state = {
   families: [], guardians: [], links: [], payments: [], allocations: [],
@@ -58,6 +58,7 @@ function render(container) {
         <td>${formatCurrency(Math.max(Number(payment.amount) - allocated, 0))}</td>
         <td>${escapeHtml(payment.payment_method.replaceAll("_"," "))}</td>
         <td>${statusBadge(payment.payment_status)}</td>
+        <td class="table-actions"><button class="button button-secondary button-small" data-action="view-receipt" data-id="${payment.id}">Receipt</button><button class="button button-danger button-small" data-action="reverse-payment" data-id="${payment.id}" ${payment.payment_status === "reversed" ? "disabled" : ""}>Reverse</button></td>
       </tr>`;
   }).join("");
 
@@ -80,8 +81,8 @@ function render(container) {
         <div class="section-card-header"><div><h3>Payments</h3><p class="muted">Unallocated money remains as family credit.</p></div></div>
         ${state.payments.length ? `
           <div class="table-wrap"><table class="data-table">
-            <thead><tr><th>Payment</th><th>Family</th><th>Received</th><th>Allocated</th><th>Credit</th><th>Method</th><th>Status</th></tr></thead>
-            <tbody>${paymentRows}</tbody>
+            <thead><tr><th>Payment</th><th>Family</th><th>Received</th><th>Allocated</th><th>Credit</th><th>Method</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody id="paymentRows">${paymentRows}</tbody>
           </table></div>` : emptyState("No payments recorded", "Record a fictional family payment after creating a charge.")}
       </section>
       <section class="section-card">
@@ -96,6 +97,7 @@ function render(container) {
 
   container.querySelector("#recordPaymentButton").addEventListener("click", openPaymentDialog);
   container.querySelector("#createInvoiceButton").addEventListener("click", openInvoiceDialog);
+  container.querySelector("#paymentRows")?.addEventListener("click", handlePaymentAction);
   container.querySelector("#invoiceRows")?.addEventListener("click", event => {
     const button = event.target.closest("button[data-action='view-invoice']");
     if (button) viewInvoice(button.dataset.id);
@@ -325,6 +327,56 @@ async function saveInvoice(event) {
   } finally {
     setButtonBusy(button, false);
   }
+}
+
+
+function handlePaymentAction(event) {
+  const button = event.target.closest("button[data-action]");
+  if (!button) return;
+  const payment = state.payments.find(item => item.id === button.dataset.id);
+  if (!payment) return;
+  if (button.dataset.action === "view-receipt") viewReceipt(payment);
+  if (button.dataset.action === "reverse-payment") reversePayment(payment);
+}
+
+async function viewReceipt(payment) {
+  try {
+    const supabase = getSupabaseClient();
+    const { data: allocations, error: allocationError } = await supabase.from("payment_allocations").select("*").eq("payment_id", payment.id).eq("status", "active").is("deleted_at", null);
+    if (allocationError) throw allocationError;
+    const chargeIds = (allocations || []).map(item => item.charge_id);
+    const { data: charges, error: chargeError } = chargeIds.length ? await supabase.from("charges").select("id,student_id,description").in("id", chargeIds) : { data: [], error: null };
+    if (chargeError) throw chargeError;
+    const chargeMap = new Map((charges || []).map(item => [item.id, item]));
+    const studentMap = new Map(state.students.map(item => [item.id, `${item.preferred_name || item.first_name} ${item.last_name}`]));
+    const family = state.families.find(item => item.id === payment.family_id);
+    const settingsResult = await supabase.from("app_settings").select("setting_key,setting_value").in("setting_key", ["dojo.profile","invoice.defaults"]).is("deleted_at", null);
+    if (settingsResult.error) throw settingsResult.error;
+    const settings = Object.fromEntries((settingsResult.data || []).map(row => [row.setting_key, row.setting_value]));
+    const dojo = settings["dojo.profile"] || {}, defaults = settings["invoice.defaults"] || {};
+    const allocated = (allocations || []).reduce((sum, item) => sum + Number(item.allocation_amount), 0);
+    const body = `<div class="invoice-preview"><p><strong>${escapeHtml(dojo.dojo_name || "JKA Christchurch – GardenCity")}</strong><br>${escapeHtml(dojo.instructor_name || "André Von Rhenen")}<br>${escapeHtml(dojo.location || "Christchurch, New Zealand")}</p><h2>Payment receipt ${escapeHtml(payment.payment_number)}</h2><p><strong>Date received:</strong> ${formatDate(payment.payment_date)}<br><strong>Family:</strong> ${escapeHtml(family?.billing_name || family?.family_name || "—")}<br><strong>Method:</strong> ${escapeHtml(payment.payment_method.replaceAll("_", " "))}<br><strong>Reference:</strong> ${escapeHtml(payment.bank_reference || "—")}</p><table><thead><tr><th>Allocated to</th><th>Student</th><th>Amount</th></tr></thead><tbody>${(allocations || []).map(item => { const charge = chargeMap.get(item.charge_id); return `<tr><td>${escapeHtml(charge?.description || "Unidentified charge")}</td><td>${escapeHtml(studentMap.get(charge?.student_id) || "Family")}</td><td>${formatCurrency(item.allocation_amount)}</td></tr>`; }).join("") || '<tr><td colspan="3">Unallocated family credit</td></tr>'}</tbody></table><p class="invoice-total">Amount received: ${formatCurrency(payment.amount)}</p><p class="invoice-total">Allocated: ${formatCurrency(allocated)}</p><p class="invoice-total">Remaining family credit: ${formatCurrency(Math.max(Number(payment.amount) - allocated, 0))}</p><p>${escapeHtml(defaults.footer || "Thank you for supporting JKA Christchurch – GardenCity.")}</p></div>`;
+    openDialog({ title: `Receipt ${payment.payment_number}`, eyebrow: "Finance", body, footer: '<button class="button button-secondary" type="button" data-close-dialog>Close</button><button id="printReceiptButton" class="button button-primary" type="button">Print / save PDF</button>' });
+    document.querySelector("[data-close-dialog]").addEventListener("click", closeDialog);
+    document.getElementById("printReceiptButton").addEventListener("click", () => printInvoice(body));
+  } catch (error) { notifyError(error); }
+}
+
+async function reversePayment(payment) {
+  const reason = window.prompt(`Reason for reversing ${payment.payment_number}:`);
+  if (!reason) return;
+  try {
+    const supabase = getSupabaseClient();
+    const { data: allocations, error: allocationError } = await supabase.from("payment_allocations").select("id").eq("payment_id", payment.id).eq("status", "active").is("deleted_at", null);
+    if (allocationError) throw allocationError;
+    for (const allocation of allocations || []) {
+      const { error } = await supabase.from("payment_allocations").update({ status: "reversed", reversed_at: new Date().toISOString(), reversal_reason: reason }).eq("id", allocation.id);
+      if (error) throw error;
+    }
+    const { error } = await supabase.from("payments").update({ payment_status: "reversed", reversed_at: new Date().toISOString(), reversal_reason: reason }).eq("id", payment.id);
+    if (error) throw error;
+    await refresh(); render(document.getElementById("moduleContent")); notifySuccess("Payment reversed. Create a corrected payment if required."); dispatchDataChanged({ module: "payments" });
+  } catch (error) { notifyError(error); }
 }
 
 async function viewInvoice(invoiceId) {
