@@ -1,11 +1,12 @@
-import { getSupabaseClient } from "./database.js?v=1.1.0";
+import { getSupabaseClient } from "./database.js?v=1.2.0";
 import {
   calculateAge,
   dispatchDataChanged,
+  formatCurrency,
   normaliseText,
   nowIso,
   todayIso
-} from "./utilities.js?v=1.1.0";
+} from "./utilities.js?v=1.2.0";
 import {
   closeDialog,
   confirmAction,
@@ -17,15 +18,30 @@ import {
   openDialog,
   setButtonBusy,
   statusBadge
-} from "./ui.js?v=1.1.0";
-import { openStudentRecords } from "./student-records.js?v=1.1.0";
+} from "./ui.js?v=1.2.0";
+import { openStudentRecords } from "./student-records.js?v=1.2.0";
+import {
+  DEFAULT_FEE_SETTINGS,
+  DEFAULT_REFERRAL_RULES,
+  billingListLabel,
+  calculateStudentPricing,
+  discountSummary,
+  normaliseBillingProfile,
+  referralDefaults,
+  referralSummary,
+  serializeBillingNotes
+} from "./billing.js?v=1.2.0";
 
 let state = {
   students: [],
   families: [],
   belts: [],
   guardians: [],
-  guardianFamilies: []
+  guardianFamilies: [],
+  billingProfiles: [],
+  feeSettings: DEFAULT_FEE_SETTINGS,
+  terms: [],
+  referralRules: DEFAULT_REFERRAL_RULES
 };
 
 export async function renderStudents(container) {
@@ -35,15 +51,18 @@ export async function renderStudents(container) {
 
 async function refresh() {
   const supabase = getSupabaseClient();
-  const [studentsResult, familiesResult, beltsResult, guardiansResult, linksResult] = await Promise.all([
+  const [studentsResult, familiesResult, beltsResult, guardiansResult, linksResult, billingResult, feesResult, termsResult] = await Promise.all([
     supabase.from("students").select("*").is("deleted_at", null).order("last_name").order("first_name"),
     supabase.from("families").select("*").is("deleted_at", null).order("family_name"),
     supabase.from("belt_ranks").select("id,rank_name,belt_colour,rank_order").eq("is_active", true).order("rank_order"),
     supabase.from("guardians").select("*").is("deleted_at", null).order("full_name"),
-    supabase.from("guardian_families").select("*")
+    supabase.from("guardian_families").select("*"),
+    supabase.from("student_billing_profiles").select("*").is("deleted_at", null),
+    supabase.from("app_settings").select("setting_key,setting_value").in("setting_key", ["fees.defaults", "referral.rules"]).is("deleted_at", null),
+    supabase.from("terms").select("*").is("deleted_at", null).order("start_date", { ascending: false })
   ]);
 
-  for (const result of [studentsResult, familiesResult, beltsResult, guardiansResult, linksResult]) {
+  for (const result of [studentsResult, familiesResult, beltsResult, guardiansResult, linksResult, billingResult, feesResult, termsResult]) {
     if (result.error) throw result.error;
   }
 
@@ -52,12 +71,18 @@ async function refresh() {
     families: familiesResult.data || [],
     belts: beltsResult.data || [],
     guardians: guardiansResult.data || [],
-    guardianFamilies: linksResult.data || []
+    guardianFamilies: linksResult.data || [],
+    billingProfiles: billingResult.data || [],
+    feeSettings: { ...DEFAULT_FEE_SETTINGS, ...(((feesResult.data || []).find(row => row.setting_key === "fees.defaults") || {}).setting_value || {}) },
+    terms: termsResult.data || [],
+    referralRules: { ...DEFAULT_REFERRAL_RULES, ...(((feesResult.data || []).find(row => row.setting_key === "referral.rules") || {}).setting_value || {}) }
   };
 }
 
 function render(container) {
   const familyMap = new Map(state.families.map(item => [item.id, item]));
+  const currentTerm = currentBillingTerm();
+  const billingMap = new Map(state.billingProfiles.map(item => [item.student_id, item]));
   const beltMap = new Map(
     state.belts.map(item => [item.id, `${item.belt_colour || ""} ${item.rank_name || ""}`.trim()])
   );
@@ -68,6 +93,14 @@ function render(container) {
     const displayName = student.preferred_name || student.first_name;
     const age = calculateAge(student.date_of_birth);
     const completeness = getCoreCompleteness(student, family, guardian);
+    const billingProfile = normaliseBillingProfile(billingMap.get(student.id) || {});
+    const pricing = calculateStudentPricing({
+      student,
+      students: state.students,
+      profile: billingProfile,
+      feeSettings: state.feeSettings,
+      term: currentTerm
+    });
 
     return `
       <tr data-search="${escapeHtml(`${student.student_number} ${student.first_name} ${student.last_name} ${displayName} ${family?.family_name || ""} ${guardian?.full_name || ""}`.toLowerCase())}">
@@ -82,6 +115,10 @@ function render(container) {
         </td>
         <td>${escapeHtml(beltMap.get(student.current_belt_rank_id) || "Not recorded")}</td>
         <td>${statusBadge(student.status)}</td>
+        <td>
+          <strong>${escapeHtml(billingListLabel(pricing))}</strong>
+          <div class="record-meta">${escapeHtml(pricing.adjustmentLabel)}${currentTerm ? ` · ${escapeHtml(currentTerm.term_name)} ${currentTerm.academic_year}` : ""}</div>
+        </td>
         <td>
           <div class="completion-cell">
             <span class="completion-value">${completeness.percent}%</span>
@@ -129,6 +166,7 @@ function render(container) {
                 <th>Linked family</th>
                 <th>Current belt</th>
                 <th>Status</th>
+                <th>Student fee</th>
                 <th>Profile</th>
                 <th>Actions</th>
               </tr>
@@ -190,6 +228,21 @@ function guardiansForFamily(familyId) {
   return state.guardians.filter(guardian => ids.has(guardian.id));
 }
 
+function currentBillingTerm() {
+  const today = todayIso();
+  return state.terms.find(term => term.status === "open" && term.start_date <= today && term.end_date >= today)
+    || state.terms.find(term => term.status === "open")
+    || state.terms.find(term => term.status === "planned" && term.end_date >= today)
+    || state.terms[0]
+    || null;
+}
+
+function billingProfileForStudent(studentId) {
+  return normaliseBillingProfile(
+    state.billingProfiles.find(item => item.student_id === studentId) || {}
+  );
+}
+
 function getCoreCompleteness(student, family, guardian) {
   const checks = [
     student.first_name,
@@ -214,6 +267,10 @@ function getCoreCompleteness(student, family, guardian) {
 function openStudentDialog(student = null) {
   const family = state.families.find(item => item.id === student?.family_id) || null;
   const primaryGuardian = primaryGuardianForFamily(family);
+  const existingBillingRow = state.billingProfiles.find(item => item.student_id === student?.id) || null;
+  const billingProfile = normaliseBillingProfile(existingBillingRow || {});
+  const referral = referralDefaults(billingProfile.referral_count, state.referralRules);
+  const currentTerm = currentBillingTerm();
 
   const familyOptions = [
     '<option value="">No family yet</option>',
@@ -267,9 +324,37 @@ function openStudentDialog(student = null) {
           </div>
         </section>
 
-        <section class="wizard-section">
+        <section class="wizard-section billing-wizard-section">
           <div class="wizard-section-heading">
             <span class="wizard-step">2</span>
+            <div><h3>Student fee, family discount and referral reward</h3><p>The app calculates the standard fee from the payment plan, family position and current term weeks. Enter a custom amount only when this student has a different agreement.</p></div>
+          </div>
+          <div class="form-grid">
+            <label class="form-field"><span class="form-label">Family fee position</span><select class="select" name="familyPositionOverride">
+              <option value="auto" ${billingProfile.family_position_override === "auto" ? "selected" : ""}>Automatic from linked family</option>
+              <option value="first" ${billingProfile.family_position_override === "first" ? "selected" : ""}>First family member</option>
+              <option value="additional" ${billingProfile.family_position_override === "additional" ? "selected" : ""}>Additional family member</option>
+            </select></label>
+            <label class="form-field"><span class="form-label">Custom amount this student pays</span><input class="input" type="number" min="0" step="0.01" name="customAmount" value="${billingProfile.custom_amount ?? ""}" placeholder="Leave blank for automatic amount"><span class="form-help">A custom amount overrides the normal family or referral calculation.</span></label>
+            <label class="form-field"><span class="form-label">Custom amount period</span><select class="select" name="customAmountPeriod">
+              <option value="term" ${billingProfile.custom_amount_period === "term" ? "selected" : ""}>Per term</option>
+              <option value="week" ${billingProfile.custom_amount_period === "week" ? "selected" : ""}>Per week</option>
+            </select></label>
+            <label class="form-field"><span class="form-label">Qualifying referrals</span><select id="referralCount" class="select" name="referralCount">
+              ${[0,1,2,3,4].map(count => `<option value="${count}" ${billingProfile.referral_count === count ? "selected" : ""}>${count} referral${count === 1 ? "" : "s"}</option>`).join("")}
+            </select></label>
+            <label class="form-field"><span class="form-label">Referral discount</span><input id="referralDiscountPercent" class="input" type="number" min="0" max="100" name="referralDiscountPercent" value="${existingBillingRow ? billingProfile.referral_discount_percent : referral.referral_discount_percent}" readonly></label>
+            <label class="form-field"><span class="form-label">Reward terms remaining</span><input id="rewardTermsRemaining" class="input" type="number" min="0" max="99" name="rewardTermsRemaining" value="${existingBillingRow ? billingProfile.reward_terms_remaining : referral.reward_terms_remaining}"><span class="form-help">Reduce this automatically when the reward is used on a term charge.</span></label>
+            <label class="checkbox-row"><input id="permanentFree" type="checkbox" name="permanentFree" ${(existingBillingRow ? billingProfile.permanent_free : referral.permanent_free) ? "checked" : ""}><span>Permanent free training after 4 referrals</span></label>
+            <label class="form-field full"><span class="form-label">Billing notes</span><textarea class="textarea" name="billingNotes">${escapeHtml(billingProfile.notes || "")}</textarea></label>
+          </div>
+          <div id="studentFeePreview" class="fee-preview-card"></div>
+          <p class="form-help">Referral rewards exclude gasshukus and gradings. Current calculation uses ${currentTerm ? `${escapeHtml(currentTerm.term_name)} ${currentTerm.academic_year} (${currentTerm.number_of_training_weeks || 0} payment weeks)` : "the standard fees because no current term is configured"}.</p>
+        </section>
+
+        <section class="wizard-section">
+          <div class="wizard-section-heading">
+            <span class="wizard-step">3</span>
             <div><h3>Family and billing details</h3><p>Select an existing family or create it here. Updates automatically flow to Payments, Invoices, Banking and Reports.</p></div>
           </div>
           <div class="form-grid">
@@ -287,7 +372,7 @@ function openStudentDialog(student = null) {
 
         <section class="wizard-section">
           <div class="wizard-section-heading">
-            <span class="wizard-step">3</span>
+            <span class="wizard-step">4</span>
             <div><h3>Primary guardian</h3><p>The guardian is stored once and linked to the student and family. Editing it here updates all linked sections.</p></div>
           </div>
           <div class="form-grid">
@@ -301,7 +386,7 @@ function openStudentDialog(student = null) {
 
         <section class="wizard-section">
           <div class="wizard-section-heading">
-            <span class="wizard-step">4</span>
+            <span class="wizard-step">5</span>
             <div><h3>Consents and notes</h3><p>Tick only information that has been confirmed.</p></div>
           </div>
           <div class="form-grid">
@@ -333,8 +418,14 @@ function openStudentDialog(student = null) {
   dialog.querySelector("[name='firstName']").addEventListener("blur", showDuplicateWarning);
   dialog.querySelector("[name='lastName']").addEventListener("blur", showDuplicateWarning);
   dialog.querySelector("[name='dateOfBirth']").addEventListener("change", showDuplicateWarning);
+  ["paymentPlan", "familyPositionOverride", "customAmount", "customAmountPeriod", "rewardTermsRemaining"]
+    .forEach(name => dialog.querySelector(`[name='${name}']`)?.addEventListener("input", updateBillingPreview));
+  dialog.querySelector("#referralCount")?.addEventListener("change", updateReferralFields);
+  dialog.querySelector("#permanentFree")?.addEventListener("change", updateBillingPreview);
+  dialog.querySelector("[name='feeExempt']")?.addEventListener("change", updateBillingPreview);
 
   populateGuardianSelect(family?.id || "__new__", primaryGuardian?.id || "__new__");
+  updateBillingPreview();
 }
 
 function handleFamilySelection(event) {
@@ -354,6 +445,7 @@ function handleFamilySelection(event) {
   const guardian = primaryGuardianForFamily(family);
   populateGuardianSelect(selected, guardian?.id || "__new__");
   populateGuardianFields(guardian);
+  updateBillingPreview();
 }
 
 function populateGuardianSelect(familyId, selectedGuardianId = "") {
@@ -393,6 +485,54 @@ function suggestFamilyDefaults(event) {
 
 function setFormValue(form, name, value) {
   if (form?.elements?.[name]) form.elements[name].value = value ?? "";
+}
+
+function updateReferralFields(event) {
+  const form = event.currentTarget.form;
+  const defaults = referralDefaults(Number(event.currentTarget.value || 0), state.referralRules);
+  form.elements.referralDiscountPercent.value = defaults.referral_discount_percent;
+  form.elements.rewardTermsRemaining.value = defaults.reward_terms_remaining;
+  form.elements.permanentFree.checked = defaults.permanent_free;
+  updateBillingPreview();
+}
+
+function updateBillingPreview() {
+  const form = document.getElementById("studentMasterForm");
+  const preview = document.getElementById("studentFeePreview");
+  if (!form || !preview) return;
+
+  const selectedFamilyId = form.elements.familyId.value;
+  const existingId = form.elements.id.value;
+  const temporaryStudent = {
+    id: existingId || "preview-student",
+    family_id: selectedFamilyId && selectedFamilyId !== "__new__" ? selectedFamilyId : null,
+    payment_plan: form.elements.paymentPlan.value || "term",
+    status: form.elements.status.value || "active",
+    start_date: form.elements.startDate.value || todayIso(),
+    is_exempt_from_fees: form.elements.feeExempt.checked
+  };
+  const students = existingId
+    ? state.students.map(student => student.id === existingId ? { ...student, ...temporaryStudent } : student)
+    : [...state.students, temporaryStudent];
+  const profile = {
+    family_position_override: form.elements.familyPositionOverride.value,
+    custom_amount: form.elements.customAmount.value,
+    custom_amount_period: form.elements.customAmountPeriod.value,
+    referral_count: Number(form.elements.referralCount.value || 0),
+    referral_discount_percent: Number(form.elements.referralDiscountPercent.value || 0),
+    reward_terms_remaining: Number(form.elements.rewardTermsRemaining.value || 0),
+    permanent_free: form.elements.permanentFree.checked,
+    is_exempt: form.elements.feeExempt.checked
+  };
+  const pricing = calculateStudentPricing({
+    student: temporaryStudent,
+    students,
+    profile,
+    feeSettings: state.feeSettings,
+    term: currentBillingTerm()
+  });
+
+  preview.innerHTML = `<div><span>Calculated student fee</span><strong>${escapeHtml(billingListLabel(pricing))}</strong></div><div><span>Applied rule</span><strong>${escapeHtml(pricing.adjustmentLabel)}</strong></div><div><span>Family position</span><strong>${pricing.familyPosition === "additional" ? "Additional member" : "First member"}</strong></div>`;
 }
 
 function showDuplicateWarning() {
@@ -490,6 +630,9 @@ async function saveStudent(event) {
       normaliseText(data.get("guardianRelationship")) || "Guardian"
     );
 
+    await saveStudentBillingProfile(supabase, studentId, familyId, studentRow, data);
+    await syncStudentTermEnrolment(supabase, studentId, studentRow);
+
     closeDialog();
     await refresh();
     render(document.getElementById("moduleContent"));
@@ -503,6 +646,96 @@ async function saveStudent(event) {
   } finally {
     setButtonBusy(button, false);
   }
+}
+
+async function syncStudentTermEnrolment(supabase, studentId, studentRow) {
+  const term = currentBillingTerm();
+  if (!term || studentRow.start_date > term.end_date) return;
+
+  const statusMap = {
+    active: "enrolled",
+    trial: "trial",
+    paused: "paused",
+    waiting: "paused",
+    inactive: "withdrawn",
+    left: "withdrawn"
+  };
+  const enrolmentStatus = statusMap[studentRow.status] || "enrolled";
+  const joinedOn = studentRow.start_date < term.start_date ? term.start_date : studentRow.start_date;
+  const leftOn = ["inactive", "left"].includes(studentRow.status) ? todayIso() : null;
+
+  const { error } = await supabase
+    .from("term_enrolments")
+    .upsert({
+      term_id: term.id,
+      student_id: studentId,
+      enrolment_status: enrolmentStatus,
+      joined_term_on: joinedOn,
+      left_term_on: leftOn,
+      eligible_for_term_charge: !studentRow.is_exempt_from_fees,
+      charge_exclusion_reason: studentRow.is_exempt_from_fees ? "Student marked fee exempt in Student Hub" : null,
+      deleted_at: null
+    }, { onConflict: "term_id,student_id" });
+  if (error) throw error;
+}
+
+async function saveStudentBillingProfile(supabase, studentId, familyId, studentRow, data) {
+  const referralCount = Number(data.get("referralCount") || 0);
+  const defaults = referralDefaults(referralCount, state.referralRules);
+  const profile = {
+    student_id: studentId,
+    payment_plan: data.get("paymentPlan") || null,
+    is_exempt: data.get("feeExempt") === "on",
+    exemption_reason: data.get("feeExempt") === "on"
+      ? normaliseText(data.get("billingNotes")) || "Fee exemption recorded in Student Hub"
+      : null,
+    family_position_override: data.get("familyPositionOverride") || "auto",
+    custom_amount: data.get("customAmount") === "" ? null : Number(data.get("customAmount")),
+    custom_amount_period: data.get("customAmountPeriod") || "term",
+    referral_count: referralCount,
+    referral_discount_percent: Number(data.get("referralDiscountPercent") || defaults.referral_discount_percent),
+    reward_terms_remaining: Number(data.get("rewardTermsRemaining") || 0),
+    permanent_free: data.get("permanentFree") === "on" || referralCount >= 4,
+    notes: normaliseText(data.get("billingNotes")) || ""
+  };
+
+  const { error: billingError } = await supabase
+    .from("student_billing_profiles")
+    .upsert({
+      student_id: studentId,
+      payment_plan: profile.payment_plan,
+      is_exempt: profile.is_exempt,
+      exemption_reason: profile.exemption_reason,
+      billing_notes: serializeBillingNotes(profile),
+      deleted_at: null
+    }, { onConflict: "student_id" });
+  if (billingError) throw billingError;
+
+  const pricingStudent = {
+    ...studentRow,
+    id: studentId,
+    family_id: familyId,
+    created_at: state.students.find(item => item.id === studentId)?.created_at || new Date().toISOString()
+  };
+  const pricingStudents = state.students.some(item => item.id === studentId)
+    ? state.students.map(item => item.id === studentId ? pricingStudent : item)
+    : [...state.students, pricingStudent];
+  const pricing = calculateStudentPricing({
+    student: pricingStudent,
+    students: pricingStudents,
+    profile,
+    feeSettings: state.feeSettings,
+    term: currentBillingTerm()
+  });
+
+  const { error: summaryError } = await supabase
+    .from("students")
+    .update({
+      discount_summary: discountSummary(pricing),
+      referral_reward_summary: referralSummary(profile)
+    })
+    .eq("id", studentId);
+  if (summaryError) throw summaryError;
 }
 
 async function confirmStudentDuplicate(data, currentId) {

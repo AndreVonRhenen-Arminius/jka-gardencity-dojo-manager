@@ -1,5 +1,5 @@
-import { getSupabaseClient } from "./database.js?v=1.1.0";
-import { formatDate, setText, todayIso, readableError } from "./utilities.js?v=1.1.0";
+import { getSupabaseClient } from "./database.js?v=1.2.0";
+import { formatDate, setText, todayIso, readableError } from "./utilities.js?v=1.2.0";
 
 async function countRows(table, configure) {
   const supabase = getSupabaseClient();
@@ -25,7 +25,8 @@ export async function loadDashboard() {
     countRows("follow_up_tasks", query => query.in("status", ["open", "in_progress"]).lte("due_date", today)),
     loadNextSession(today),
     countRows("terms"),
-    countRows("fee_schedules", query => query.eq("status", "active"))
+    countRows("fee_schedules", query => query.eq("status", "active")),
+    loadInactivityTimeout()
   ]);
 
   ["activeStudentsMetric","trialStudentsMetric","newEnquiriesMetric","outstandingChargesMetric","followUpsMetric"]
@@ -34,6 +35,7 @@ export async function loadDashboard() {
   updateChecklist("termChecklistIcon", results[6]);
   updateChecklist("feeChecklistIcon", results[7]);
   updateChecklist("studentChecklistIcon", results[0], results[1]);
+  if (results[8]?.status === "fulfilled") setText("dashboardInactivity", `${results[8].value} minutes`);
 
   const sessionResult = results[5];
   if (sessionResult.status === "fulfilled" && sessionResult.value) {
@@ -56,6 +58,18 @@ function updateChecklist(id, ...results) {
   const complete = results.some(result => result?.status === "fulfilled" && Number(result.value) > 0);
   element.classList.toggle("complete", complete);
   element.textContent = complete ? "✓" : (element.dataset.step || element.textContent);
+}
+
+async function loadInactivityTimeout() {
+  const supabase = getSupabaseClient();
+  const { data, error } = await supabase
+    .from("app_settings")
+    .select("setting_value")
+    .eq("setting_key", "security.inactivity_timeout_minutes")
+    .is("deleted_at", null)
+    .maybeSingle();
+  if (error) throw error;
+  return Number(data?.setting_value || 30);
 }
 
 async function loadNextSession(today) {

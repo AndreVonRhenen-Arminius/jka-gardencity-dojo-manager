@@ -1,12 +1,13 @@
-# Upgrade Instructions — v1.1.1
+# Upgrade Instructions — v1.2.0
 
-This patch adds safe family deletion to the working Student Hub release.
+This patch upgrades the working JKA GardenCity Dojo Manager v1.1.1 installation.
 
 ## Important
 
-- The ZIP does not contain `config.js`.
-- Your Supabase key and Microsoft login settings will not be overwritten.
-- No SQL needs to be run.
+- The ZIP does **not** contain `config.js`.
+- Your Supabase publishable key and Microsoft login settings are preserved.
+- No SQL needs to be run. Version 1.2.0 uses tables already installed during Stage 2.
+- Upload the extracted contents, not the ZIP file itself.
 
 ## Upload
 
@@ -16,29 +17,32 @@ This patch adds safe family deletion to the working Student Hub release.
 4. Upload everything inside the extracted folder.
 5. Use commit message:
 
-   `Add safe family deletion v1.1.1`
+   `Add dojo settings term sync and student billing v1.2.0`
 
 6. Commit directly to `main`.
-7. Wait for the GitHub Pages deployment to show a green tick.
+7. Open **Actions** and wait for the Pages deployment to show a green tick.
 
 ## Open the update
 
-1. Close all Dojo Manager tabs and installed-app windows.
+1. Close all browser tabs and installed-app windows for the Dojo Manager.
 2. Open:
 
-   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.1.1`
+   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.2.0`
 
-3. Press `Ctrl + F5`.
-4. Confirm the bottom-left version is `1.1.1`.
+3. Press `Ctrl + F5` once.
+4. Confirm the bottom-left corner shows **Version 1.2.0**.
 
-## Delete an accidental family
+## First setup after upgrading
 
-1. Open **Families & Guardians**.
-2. Find the unused family.
-3. Select **Delete family**.
-4. Review the dependency check.
-5. Leave guardian cleanup selected when the guardian is also an unused test record.
-6. Confirm deletion.
+1. Open **Settings**.
+2. Complete the dojo contact and address fields.
+3. Confirm the normal training days, times and venue.
+4. Enter the Term 1–4 dates for 2026.
+5. Confirm the fee and referral rules.
+6. Select **Save settings and sync terms**.
+7. Open **Terms** and confirm the calculated payment weeks.
+8. Open **Attendance** and confirm the generated sessions appear.
+9. Open **Student Hub**, edit a fictional student and confirm the fee preview.
+10. Open **Fees & Ledgers** and create a fictional term or weekly charge.
 
-A family with students or historical records will not be deleted. Archived families
-can be recovered through Audit History.
+Use fictional records before applying the workflow to real payments.

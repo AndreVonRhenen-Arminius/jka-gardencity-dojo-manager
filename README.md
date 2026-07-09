@@ -1,14 +1,24 @@
-# JKA GardenCity Dojo Manager — v1.1.1
+# JKA GardenCity Dojo Manager — v1.2.0
 
-This upgrade adds safe deletion for accidental or unused family records.
+Version 1.2.0 adds a complete dojo Settings profile, automatic term-session synchronisation and linked student-specific billing.
 
-## Behaviour
+## Main sources of truth
 
-- **Delete family** appears in Families & Guardians.
-- The app checks linked students and historical records first.
-- Used families cannot be deleted.
-- Unused families are moved to the recycle bin.
-- Unlinked guardian test records can be archived at the same time.
-- Shared guardians are preserved.
+- **Settings:** dojo details, venue, normal class schedule, term calendar, fee defaults, referral rules, invoice preferences and user access.
+- **Student Hub:** student, family, guardian, payment plan, custom amount, family position and referral reward status.
+- **Terms:** authoritative term dates and calculated payment weeks.
+- **Sessions:** individual classes and exceptions.
+- **Attendance:** uses the synced Sessions and Student Hub records.
+- **Fees & Ledgers:** calculates charges using the linked student billing rules.
 
-The patch excludes `config.js` and requires no database migration.
+## Fee rules included
+
+- $20 per week per student
+- $120 per term for the first family member
+- $100 per term for each additional family member
+- 1 referral: 50% off the next term
+- 2 referrals: one free term
+- 3 referrals: two free terms
+- 4 referrals: free normal training permanently, excluding gasshukus and gradings
+
+The upgrade patch excludes `config.js` and requires no database migration.

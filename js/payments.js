@@ -1,6 +1,6 @@
-import { getSupabaseClient } from "./database.js?v=1.1.0";
-import { datePlusDays, dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.1.0";
-import { closeDialog, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.1.0";
+import { getSupabaseClient } from "./database.js?v=1.2.0";
+import { datePlusDays, dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.2.0";
+import { closeDialog, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.2.0";
 
 let state = {
   families: [], guardians: [], links: [], payments: [], allocations: [],
@@ -355,7 +355,7 @@ async function viewReceipt(payment) {
     const settings = Object.fromEntries((settingsResult.data || []).map(row => [row.setting_key, row.setting_value]));
     const dojo = settings["dojo.profile"] || {}, defaults = settings["invoice.defaults"] || {};
     const allocated = (allocations || []).reduce((sum, item) => sum + Number(item.allocation_amount), 0);
-    const body = `<div class="invoice-preview"><p><strong>${escapeHtml(dojo.dojo_name || "JKA Christchurch – GardenCity")}</strong><br>${escapeHtml(dojo.instructor_name || "André Von Rhenen")}<br>${escapeHtml(dojo.location || "Christchurch, New Zealand")}</p><h2>Payment receipt ${escapeHtml(payment.payment_number)}</h2><p><strong>Date received:</strong> ${formatDate(payment.payment_date)}<br><strong>Family:</strong> ${escapeHtml(family?.billing_name || family?.family_name || "—")}<br><strong>Method:</strong> ${escapeHtml(payment.payment_method.replaceAll("_", " "))}<br><strong>Reference:</strong> ${escapeHtml(payment.bank_reference || "—")}</p><table><thead><tr><th>Allocated to</th><th>Student</th><th>Amount</th></tr></thead><tbody>${(allocations || []).map(item => { const charge = chargeMap.get(item.charge_id); return `<tr><td>${escapeHtml(charge?.description || "Unidentified charge")}</td><td>${escapeHtml(studentMap.get(charge?.student_id) || "Family")}</td><td>${formatCurrency(item.allocation_amount)}</td></tr>`; }).join("") || '<tr><td colspan="3">Unallocated family credit</td></tr>'}</tbody></table><p class="invoice-total">Amount received: ${formatCurrency(payment.amount)}</p><p class="invoice-total">Allocated: ${formatCurrency(allocated)}</p><p class="invoice-total">Remaining family credit: ${formatCurrency(Math.max(Number(payment.amount) - allocated, 0))}</p><p>${escapeHtml(defaults.footer || "Thank you for supporting JKA Christchurch – GardenCity.")}</p></div>`;
+    const body = `<div class="invoice-preview"><p>${dojoContactBlock(dojo)}</p><h2>Payment receipt ${escapeHtml(payment.payment_number)}</h2><p><strong>Date received:</strong> ${formatDate(payment.payment_date)}<br><strong>Family:</strong> ${escapeHtml(family?.billing_name || family?.family_name || "—")}<br><strong>Method:</strong> ${escapeHtml(payment.payment_method.replaceAll("_", " "))}<br><strong>Reference:</strong> ${escapeHtml(payment.bank_reference || "—")}</p><table><thead><tr><th>Allocated to</th><th>Student</th><th>Amount</th></tr></thead><tbody>${(allocations || []).map(item => { const charge = chargeMap.get(item.charge_id); return `<tr><td>${escapeHtml(charge?.description || "Unidentified charge")}</td><td>${escapeHtml(studentMap.get(charge?.student_id) || "Family")}</td><td>${formatCurrency(item.allocation_amount)}</td></tr>`; }).join("") || '<tr><td colspan="3">Unallocated family credit</td></tr>'}</tbody></table><p class="invoice-total">Amount received: ${formatCurrency(payment.amount)}</p><p class="invoice-total">Allocated: ${formatCurrency(allocated)}</p><p class="invoice-total">Remaining family credit: ${formatCurrency(Math.max(Number(payment.amount) - allocated, 0))}</p><p>${escapeHtml(defaults.footer || "Thank you for supporting JKA Christchurch – GardenCity.")}</p></div>`;
     openDialog({ title: `Receipt ${payment.payment_number}`, eyebrow: "Finance", body, footer: '<button class="button button-secondary" type="button" data-close-dialog>Close</button><button id="printReceiptButton" class="button button-primary" type="button">Print / save PDF</button>' });
     document.querySelector("[data-close-dialog]").addEventListener("click", closeDialog);
     document.getElementById("printReceiptButton").addEventListener("click", () => printInvoice(body));
@@ -399,7 +399,7 @@ async function viewInvoice(invoiceId) {
 
     const body = `
       <div id="printableInvoice" class="invoice-preview">
-        <p><strong>${escapeHtml(dojo.dojo_name || "JKA Christchurch – GardenCity")}</strong><br>${escapeHtml(dojo.instructor_name || "André Von Rhenen")}<br>${escapeHtml(dojo.location || "Christchurch, New Zealand")}</p>
+        <p>${dojoContactBlock(dojo)}</p>
         <h2>Invoice ${escapeHtml(invoice.invoice_number)}</h2>
         <p><strong>Invoice date:</strong> ${formatDate(invoice.invoice_date)}<br>
         <strong>Due date:</strong> ${formatDate(invoice.due_date)}<br>
@@ -427,6 +427,19 @@ async function viewInvoice(invoiceId) {
   } catch (error) {
     notifyError(error);
   }
+}
+
+function dojoContactBlock(dojo) {
+  const address = [
+    dojo.address_line_1,
+    dojo.address_line_2,
+    dojo.suburb,
+    dojo.city,
+    dojo.postcode,
+    dojo.country
+  ].filter(Boolean).map(escapeHtml).join(", ");
+  const contact = [dojo.email, dojo.phone].filter(Boolean).map(escapeHtml).join(" · ");
+  return `<strong>${escapeHtml(dojo.dojo_name || "JKA Christchurch – GardenCity")}</strong><br>${escapeHtml([dojo.instructor_title, dojo.instructor_name || "André Von Rhenen"].filter(Boolean).join(" "))}${dojo.affiliation ? `<br>${escapeHtml(dojo.affiliation)}` : ""}${address ? `<br>${address}` : dojo.location ? `<br>${escapeHtml(dojo.location)}` : ""}${contact ? `<br>${contact}` : ""}`;
 }
 
 function printInvoice(body) {

@@ -1,9 +1,9 @@
-import { getSupabaseClient } from "./database.js?v=1.1.0";
-import { dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.1.0";
+import { getSupabaseClient } from "./database.js?v=1.2.0";
+import { dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.2.0";
 import {
   closeDialog, emptyState, escapeHtml, moduleHeader, notifyError,
   notifySuccess, openDialog, setButtonBusy, statusBadge
-} from "./ui.js?v=1.1.0";
+} from "./ui.js?v=1.2.0";
 
 let state = { accounts: [], batches: [], transactions: [], payments: [], expensePayments: [], expenses: [], rules: [], reconciliations: [] };
 let importPreview = null;

@@ -1,10 +1,10 @@
-import { getSupabaseClient } from "./database.js?v=1.1.0";
+import { getSupabaseClient } from "./database.js?v=1.2.0";
 import {
   datePlusDays,
   formatDate,
   normaliseText,
   todayIso
-} from "./utilities.js?v=1.1.0";
+} from "./utilities.js?v=1.2.0";
 import {
   closeDialog,
   escapeHtml,
@@ -13,7 +13,7 @@ import {
   openDialog,
   setButtonBusy,
   statusBadge
-} from "./ui.js?v=1.1.0";
+} from "./ui.js?v=1.2.0";
 
 export async function openStudentRecords(studentReference) {
   try {

@@ -898,3 +898,42 @@ h1, h2, h3 { margin-top: 0; }
   .master-record-banner { display: grid; }
   .email-draft-meta > div { grid-template-columns: 1fr; gap: 0.15rem; }
 }
+
+/* =========================================================
+   v1.2.0 — dojo profile, automatic term sync and billing
+   ========================================================= */
+.fee-preview-card {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(201, 24, 37, 0.42);
+  border-radius: 11px;
+  background: linear-gradient(135deg, rgba(169, 18, 29, 0.18), rgba(17, 21, 27, 0.94));
+}
+.fee-preview-card > div {
+  display: grid;
+  gap: 0.28rem;
+}
+.fee-preview-card span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+.fee-preview-card strong {
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.billing-wizard-section {
+  border-color: rgba(201, 24, 37, 0.42);
+}
+.term-settings-table {
+  min-width: 820px;
+}
+.term-settings-table .input,
+.term-settings-table .select {
+  min-width: 150px;
+}
+@media (max-width: 780px) {
+  .fee-preview-card { grid-template-columns: 1fr; }
+}

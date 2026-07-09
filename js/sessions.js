@@ -1,8 +1,9 @@
-import { getSupabaseClient } from "./database.js?v=1.1.0";
-import { dispatchDataChanged, formatDate, normaliseText, todayIso } from "./utilities.js?v=1.1.0";
-import { closeDialog, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.1.0";
+import { getSupabaseClient } from "./database.js?v=1.2.0";
+import { dispatchDataChanged, formatDate, normaliseText, todayIso } from "./utilities.js?v=1.2.0";
+import { closeDialog, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.2.0";
+import { recalculateTermWeeks } from "./term-sync.js?v=1.2.0";
 
-let state = { sessions: [], terms: [] };
+let state = { sessions: [], terms: [], settings: {} };
 
 export async function renderSessions(container) {
   await refresh();
@@ -11,13 +12,19 @@ export async function renderSessions(container) {
 
 async function refresh() {
   const supabase = getSupabaseClient();
-  const [sessionsResult, termsResult] = await Promise.all([
+  const [sessionsResult, termsResult, settingsResult] = await Promise.all([
     supabase.from("training_sessions").select("*").is("deleted_at", null).order("session_date", { ascending: false }).limit(100),
-    supabase.from("terms").select("id,term_name,academic_year").is("deleted_at", null).order("start_date", { ascending: false })
+    supabase.from("terms").select("id,term_name,academic_year,start_date,end_date,status").is("deleted_at", null).order("start_date", { ascending: false }),
+    supabase.from("app_settings").select("setting_key,setting_value").in("setting_key", ["dojo.profile", "training.defaults"]).is("deleted_at", null)
   ]);
   if (sessionsResult.error) throw sessionsResult.error;
   if (termsResult.error) throw termsResult.error;
-  state = { sessions: sessionsResult.data || [], terms: termsResult.data || [] };
+  if (settingsResult.error) throw settingsResult.error;
+  state = {
+    sessions: sessionsResult.data || [],
+    terms: termsResult.data || [],
+    settings: Object.fromEntries((settingsResult.data || []).map(row => [row.setting_key, row.setting_value]))
+  };
 }
 
 function render(container) {
@@ -53,6 +60,8 @@ function render(container) {
 }
 
 function openSessionDialog(session = null) {
+  const training = state.settings["training.defaults"] || {};
+  const dojo = state.settings["dojo.profile"] || {};
   const termOptions = ['<option value="">No term</option>', ...state.terms.map(term => `<option value="${term.id}" ${session?.term_id === term.id ? "selected" : ""}>${escapeHtml(`${term.term_name} ${term.academic_year}`)}</option>`)].join("");
 
   openDialog({
@@ -63,10 +72,10 @@ function openSessionDialog(session = null) {
         <input type="hidden" name="id" value="${session?.id || ""}">
         <label class="form-field"><span class="form-label">Date</span><input class="input" type="date" name="date" required value="${session?.session_date || todayIso()}"></label>
         <label class="form-field"><span class="form-label">Term</span><select class="select" name="termId">${termOptions}</select></label>
-        <label class="form-field"><span class="form-label">Start time</span><input class="input" type="time" name="startTime" value="${(session?.start_time || "18:00").slice(0,5)}"></label>
-        <label class="form-field"><span class="form-label">End time</span><input class="input" type="time" name="endTime" value="${(session?.end_time || "19:30").slice(0,5)}"></label>
-        <label class="form-field"><span class="form-label">Venue</span><input class="input" name="venue" value="${escapeHtml(session?.venue || "Opawa School Hall")}"></label>
-        <label class="form-field"><span class="form-label">Instructor</span><input class="input" name="instructor" value="${escapeHtml(session?.instructor_name || "André Von Rhenen")}"></label>
+        <label class="form-field"><span class="form-label">Start time</span><input class="input" type="time" name="startTime" value="${(session?.start_time || training.start_time || "18:00").slice(0,5)}"></label>
+        <label class="form-field"><span class="form-label">End time</span><input class="input" type="time" name="endTime" value="${(session?.end_time || training.end_time || "19:30").slice(0,5)}"></label>
+        <label class="form-field"><span class="form-label">Venue</span><input class="input" name="venue" value="${escapeHtml(session?.venue || training.venue || dojo.venue_name || "Opawa School Hall")}"></label>
+        <label class="form-field"><span class="form-label">Instructor</span><input class="input" name="instructor" value="${escapeHtml(session?.instructor_name || dojo.instructor_name || "André Von Rhenen")}"></label>
         <label class="form-field"><span class="form-label">Session type</span><select class="select" name="sessionType">
           ${["normal_class","grading_preparation","gasshuku","seminar","competition_training","private_lesson","special_event"].map(value => `<option value="${value}" ${session?.session_type === value ? "selected" : ""}>${value.replaceAll("_"," ")}</option>`).join("")}
         </select></label>
@@ -92,6 +101,7 @@ async function saveSession(event) {
   try {
     const data = new FormData(form);
     const id = data.get("id");
+    const existingSession = id ? state.sessions.find(item => item.id === id) : null;
     const status = data.get("status");
     const notes = normaliseText(data.get("notes")) || null;
     const row = {
@@ -110,6 +120,8 @@ async function saveSession(event) {
     const supabase = getSupabaseClient();
     const result = id ? await supabase.from("training_sessions").update(row).eq("id", id) : await supabase.from("training_sessions").insert(row);
     if (result.error) throw result.error;
+    const affectedTermIds = new Set([existingSession?.term_id, row.term_id].filter(Boolean));
+    for (const termId of affectedTermIds) await recalculateTermWeeks(termId);
     closeDialog();
     await refresh();
     render(document.getElementById("moduleContent"));
