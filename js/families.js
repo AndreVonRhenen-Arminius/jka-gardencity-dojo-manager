@@ -1,5 +1,5 @@
-import { getSupabaseClient } from "./database.js?v=1.2.1";
-import { dispatchDataChanged, normaliseText, nowIso } from "./utilities.js?v=1.2.1";
+import { getSupabaseClient } from "./database.js?v=1.3.0";
+import { dispatchDataChanged, normaliseText, nowIso } from "./utilities.js?v=1.3.0";
 import {
   closeDialog,
   emptyState,
@@ -9,7 +9,7 @@ import {
   notifySuccess,
   openDialog,
   setButtonBusy
-} from "./ui.js?v=1.2.1";
+} from "./ui.js?v=1.3.0";
 
 let state = { families: [], guardians: [], links: [], students: [] };
 

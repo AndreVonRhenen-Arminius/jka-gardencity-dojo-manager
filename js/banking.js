@@ -1,11 +1,12 @@
-import { getSupabaseClient } from "./database.js?v=1.2.1";
-import { dispatchDataChanged, formatCurrency, formatDate, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.2.1";
+import { getSupabaseClient } from "./database.js?v=1.3.0";
+import { callKiwibankSync } from "./kiwibank-sync.js?v=1.3.0";
+import { dispatchDataChanged, formatCurrency, formatDate, formatDateTime, normaliseText, parseMoney, todayIso } from "./utilities.js?v=1.3.0";
 import {
   closeDialog, emptyState, escapeHtml, moduleHeader, notifyError,
   notifySuccess, openDialog, setButtonBusy, statusBadge
-} from "./ui.js?v=1.2.1";
+} from "./ui.js?v=1.3.0";
 
-let state = { accounts: [], batches: [], transactions: [], payments: [], expensePayments: [], expenses: [], rules: [], reconciliations: [] };
+let state = { accounts: [], batches: [], transactions: [], payments: [], expensePayments: [], expenses: [], rules: [], reconciliations: [], connections: [], suggestions: [], syncRuns: [] };
 let importPreview = null;
 
 export async function renderBanking(container) {
@@ -23,10 +24,13 @@ async function refresh() {
     supabase.from("expense_payments").select("*").is("deleted_at", null).eq("status", "confirmed").order("payment_date", { ascending: false }).limit(200),
     supabase.from("expenses").select("id,expense_number,description,supplier_or_payee,amount").is("deleted_at", null),
     supabase.from("matching_rules").select("*").is("deleted_at", null).eq("is_active", true).order("priority"),
-    supabase.from("bank_reconciliations").select("*").is("deleted_at", null).order("period_end", { ascending: false }).limit(50)
+    supabase.from("bank_reconciliations").select("*").is("deleted_at", null).order("period_end", { ascending: false }).limit(50),
+    supabase.from("bank_sync_connection_status").select("*").order("last_sync_attempt_at", { ascending: false, nullsFirst: false }),
+    supabase.from("bank_match_suggestions").select("*, bank_transactions(transaction_date,description,signed_amount,reference,particulars,code)").is("deleted_at", null).eq("status", "pending").order("created_at", { ascending: false }).limit(50),
+    supabase.from("bank_sync_runs").select("*").order("started_at", { ascending: false }).limit(20)
   ]);
   for (const result of results) if (result.error) throw result.error;
-  [state.accounts, state.batches, state.transactions, state.payments, state.expensePayments, state.expenses, state.rules, state.reconciliations] = results.map(result => result.data || []);
+  [state.accounts, state.batches, state.transactions, state.payments, state.expensePayments, state.expenses, state.rules, state.reconciliations, state.connections, state.suggestions, state.syncRuns] = results.map(result => result.data || []);
 }
 
 function render(container) {
@@ -49,21 +53,272 @@ function render(container) {
 
   const batchRows = state.batches.map(batch => `<tr><td>${escapeHtml(batch.file_name)}</td><td>${formatDate(batch.statement_start_date)} – ${formatDate(batch.statement_end_date)}</td><td>${batch.row_count}</td><td>${batch.duplicate_row_count}</td><td>${statusBadge(batch.status)}</td><td>${escapeHtml(accountMap.get(batch.account_id) || "—")}</td></tr>`).join("");
   const recRows = state.reconciliations.map(rec => `<tr><td>${escapeHtml(accountMap.get(rec.account_id) || "—")}</td><td>${formatDate(rec.period_start)} – ${formatDate(rec.period_end)}</td><td>${formatCurrency(rec.imported_closing_balance)}</td><td>${formatCurrency(rec.calculated_closing_balance)}</td><td>${formatCurrency(rec.difference_amount)}</td><td>${statusBadge(rec.status)}</td></tr>`).join("");
+  const syncPanel = renderKiwibankSyncPanel(accountMap);
+  const suggestionPanel = renderBankMatchSuggestions();
 
   container.innerHTML = `<div class="module-shell">
-    ${moduleHeader({ eyebrow: "Finance", title: "Banking", description: "Import reviewed Kiwibank CSV statements, match transactions and record reconciliations.", actions: '<button id="importBankCsvButton" class="button button-primary" type="button">Import CSV</button><button id="reconcileButton" class="button button-secondary" type="button">Reconcile account</button><button id="matchingRulesButton" class="button button-secondary" type="button">Matching rules</button>' })}
+    ${moduleHeader({ eyebrow: "Finance", title: "Banking", description: "Connect the selected Kiwibank dojo account through Akahu, keep CSV import as a fallback, and review every uncertain match.", actions: '<button id="openKiwibankSyncButton" class="button button-primary" type="button">Kiwibank Sync</button><button id="importBankCsvButton" class="button button-secondary" type="button">Import CSV</button><button id="reconcileButton" class="button button-secondary" type="button">Reconcile account</button><button id="matchingRulesButton" class="button button-secondary" type="button">Matching rules</button>' })}
+    ${syncPanel}
     <div class="summary-grid"><article class="summary-tile"><span>Pending review</span><strong>${pending}</strong></article><article class="summary-tile"><span>Confirmed</span><strong>${confirmed}</strong></article><article class="summary-tile"><span>Duplicates</span><strong>${duplicates}</strong></article><article class="summary-tile"><span>Confirmed net movement</span><strong>${formatCurrency(net)}</strong></article></div>
-    <section class="section-card"><div class="section-card-header"><div><h3>Imported transactions</h3><p class="muted">Every row requires review before it is treated as confirmed.</p></div><select id="bankStatusFilter" class="select compact-select"><option value="">All rows</option><option value="pending_review">Pending review</option><option value="confirmed">Confirmed</option><option value="rejected">Rejected</option><option value="duplicate">Duplicate</option></select></div>${state.transactions.length ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>Date</th><th>Description</th><th>Account</th><th>Amount</th><th>Balance</th><th>Review</th><th>Category</th><th>Actions</th></tr></thead><tbody id="bankTransactionRows">${rows}</tbody></table></div>` : emptyState("No bank transactions", "Import a Kiwibank CSV file after creating a financial account.")}</section>
-    <section class="section-card"><div class="section-card-header"><div><h3>Import history</h3></div></div>${state.batches.length ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>File</th><th>Statement period</th><th>Rows</th><th>Duplicates</th><th>Status</th><th>Account</th></tr></thead><tbody>${batchRows}</tbody></table></div>` : emptyState("No import history", "Confirmed imports will appear here.")}</section>
+    <section class="section-card"><div class="section-card-header"><div><h3>Imported transactions</h3><p class="muted">Every row requires review before it is treated as confirmed.</p></div><select id="bankStatusFilter" class="select compact-select"><option value="">All rows</option><option value="pending_review">Pending review</option><option value="confirmed">Confirmed</option><option value="rejected">Rejected</option><option value="duplicate">Duplicate</option></select></div>${state.transactions.length ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>Date</th><th>Description</th><th>Account</th><th>Amount</th><th>Balance</th><th>Review</th><th>Category</th><th>Actions</th></tr></thead><tbody id="bankTransactionRows">${rows}</tbody></table></div>` : emptyState("No bank transactions", "Use Kiwibank Sync for the selected dojo account, or import a Kiwibank CSV fallback file.")}</section>
+    ${suggestionPanel}
+    <section class="section-card"><div class="section-card-header"><div><h3>Import and sync history</h3></div></div>${state.batches.length ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>File</th><th>Statement period</th><th>Rows</th><th>Duplicates</th><th>Status</th><th>Account</th></tr></thead><tbody>${batchRows}</tbody></table></div>` : emptyState("No import history", "Kiwibank sync and confirmed CSV imports will appear here.")}</section>
     <section class="section-card"><div class="section-card-header"><div><h3>Reconciliations</h3></div></div>${state.reconciliations.length ? `<div class="table-wrap"><table class="data-table"><thead><tr><th>Account</th><th>Period</th><th>Imported close</th><th>Calculated close</th><th>Difference</th><th>Status</th></tr></thead><tbody>${recRows}</tbody></table></div>` : emptyState("No reconciliations", "Create a reconciliation after confirming a statement period.")}</section>
   </div>`;
 
+  container.querySelector("#openKiwibankSyncButton")?.addEventListener("click", openKiwibankSyncDialog);
+  container.querySelector("#connectKiwibankPanelButton")?.addEventListener("click", openKiwibankSyncDialog);
+  container.querySelector("#syncKiwibank7Button")?.addEventListener("click", event => runKiwibankSync(7, event.currentTarget));
+  container.querySelector("#syncKiwibank30Button")?.addEventListener("click", event => runKiwibankSync(30, event.currentTarget));
+  container.querySelector("#disconnectKiwibankButton")?.addEventListener("click", event => disconnectKiwibankConnection(event.currentTarget));
   container.querySelector("#importBankCsvButton").addEventListener("click", openImportDialog);
   container.querySelector("#reconcileButton").addEventListener("click", openReconciliationDialog);
   container.querySelector("#matchingRulesButton").addEventListener("click", openRulesDialog);
   container.querySelector("#bankStatusFilter")?.addEventListener("change", event => document.querySelectorAll("#bankTransactionRows tr").forEach(row => row.hidden = event.target.value && row.dataset.status !== event.target.value));
   container.querySelector("#bankTransactionRows")?.addEventListener("click", handleTransactionAction);
 }
+
+
+function activeKiwibankConnection() {
+  return state.connections.find(item => item.status === "active" && !item.disconnected_at)
+    || state.connections.find(item => !item.disconnected_at)
+    || null;
+}
+
+function renderKiwibankSyncPanel(accountMap) {
+  const connection = activeKiwibankConnection();
+  const pendingSuggestions = state.suggestions.filter(item => item.status === "pending").length;
+  const lastRun = state.syncRuns[0];
+
+  if (!connection) {
+    return `
+      <section class="section-card">
+        <div class="section-card-header">
+          <div>
+            <h3>Kiwibank Sync</h3>
+            <p class="muted">No Akahu account is mapped yet. Load accounts through the server-side Edge Function and select only the dojo Kiwibank account.</p>
+          </div>
+          <span class="badge warning">Not connected</span>
+        </div>
+        <div class="inline-message warning">
+          Akahu tokens are stored only as Supabase Edge Function secrets. Do not enter bank credentials, card details or Akahu tokens in this app.
+        </div>
+        <div class="action-row section-spacer">
+          <button id="connectKiwibankPanelButton" class="button button-primary" type="button">Connect mapped account</button>
+        </div>
+      </section>`;
+  }
+
+  return `
+    <section class="section-card">
+      <div class="section-card-header">
+        <div>
+          <h3>Kiwibank Sync</h3>
+          <p class="muted">Mapped to ${escapeHtml(accountMap.get(connection.financial_account_id) || "dojo financial account")}.</p>
+        </div>
+        ${statusBadge(connection.status)}
+      </div>
+      <div class="summary-grid">
+        <article class="summary-tile"><span>Selected account</span><strong>${escapeHtml(connection.masked_account_name || "Kiwibank account")}</strong><small>${escapeHtml(connection.masked_account_number || "Masked account")}</small></article>
+        <article class="summary-tile"><span>Current balance</span><strong>${connection.current_balance == null ? "Not supplied" : formatCurrency(connection.current_balance)}</strong><small>${connection.balance_updated_at ? `As at ${formatDateTime(connection.balance_updated_at)}` : "Only shown when supplied by Akahu"}</small></article>
+        <article class="summary-tile"><span>Last app sync</span><strong>${connection.last_successful_sync_at ? formatDateTime(connection.last_successful_sync_at) : "Not yet synced"}</strong><small>${lastRun ? `Last attempt: ${formatDateTime(lastRun.started_at)}` : "Manual test required first"}</small></article>
+        <article class="summary-tile"><span>Review queue</span><strong>${pendingSuggestions}</strong><small>Uncertain items are not auto-posted</small></article>
+      </div>
+      <div class="action-row section-spacer">
+        <button id="syncKiwibank7Button" class="button button-primary" type="button">Run 7-day test sync</button>
+        <button id="syncKiwibank30Button" class="button button-secondary" type="button">Run 30-day sync</button>
+        <button id="openKiwibankSyncButton" class="button button-secondary" type="button">Change mapping</button>
+        <button id="disconnectKiwibankButton" class="button button-danger" type="button">Disconnect</button>
+      </div>
+      <p class="muted">Transfers remain visible but are excluded from income and expenses. CSV import remains available as a fallback.</p>
+    </section>`;
+}
+
+function renderBankMatchSuggestions() {
+  if (!state.suggestions.length) {
+    return `<section class="section-card">${emptyState("No Kiwibank review items", "After a test sync, possible matches and uncategorised items will appear here for review.")}</section>`;
+  }
+
+  const rows = state.suggestions.map(item => {
+    const tx = item.bank_transactions || {};
+    return `<tr>
+      <td>${formatDate(tx.transaction_date)}</td>
+      <td><strong>${escapeHtml(tx.description || "Bank transaction")}</strong><div class="record-meta">${escapeHtml([tx.reference, tx.particulars, tx.code].filter(Boolean).join(" · "))}</div></td>
+      <td>${statusBadge(item.suggestion_type)}</td>
+      <td>${statusBadge(item.confidence_level)}</td>
+      <td class="number-cell">${formatCurrency(item.suggested_amount || Math.abs(Number(tx.signed_amount || 0)))}</td>
+      <td>${escapeHtml(item.reason_summary || "Review required")}</td>
+    </tr>`;
+  }).join("");
+
+  return `
+    <section class="section-card">
+      <div class="section-card-header">
+        <div>
+          <h3>Kiwibank review queue</h3>
+          <p class="muted">Exact and possible matches are staged here before they are confirmed against payments, expenses or transfers.</p>
+        </div>
+        <span class="badge warning">${state.suggestions.length} pending</span>
+      </div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr><th>Date</th><th>Bank text</th><th>Suggestion</th><th>Confidence</th><th>Amount</th><th>Reason</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </section>`;
+}
+
+async function openKiwibankSyncDialog() {
+  if (!state.accounts.length) {
+    notifyError(new Error("Create a financial account first. Use Expenses to add a Kiwibank Dojo Account nickname, then return to Banking."));
+    return;
+  }
+
+  const connection = activeKiwibankConnection();
+
+  openDialog({
+    title: "Kiwibank Sync account mapping",
+    eyebrow: "Akahu",
+    body: `
+      <div class="inline-message">
+        Load accounts from Akahu through the deployed Supabase Edge Function. Select only the Kiwibank dojo account. Do not select household or personal accounts.
+      </div>
+      ${connection ? `<div class="section-card section-spacer"><strong>Current mapping:</strong><br>${escapeHtml(connection.masked_account_name || "Kiwibank account")} · ${escapeHtml(connection.masked_account_number || "Masked account")}</div>` : ""}
+      <form id="kiwibankConnectionForm" class="form-grid section-spacer">
+        <label class="form-field full">
+          <span class="form-label">Akahu account</span>
+          <select class="select" name="accountId" id="akahuAccountSelect" required>
+            <option value="">Load accounts first</option>
+          </select>
+        </label>
+        <label class="form-field full">
+          <span class="form-label">Map to dojo financial account</span>
+          <select class="select" name="financialAccountId" required>${accountOptions(connection?.financial_account_id || null)}</select>
+        </label>
+        <label class="form-field full">
+          <span class="form-label">Connection name</span>
+          <input class="input" name="connectionName" value="${escapeHtml(connection?.connection_name || "Kiwibank Dojo Account")}">
+        </label>
+      </form>
+      <div id="akahuAccountLoadResult" class="section-spacer"></div>`,
+    footer: `
+      <button class="button button-secondary" type="button" data-close-dialog>Cancel</button>
+      <button id="loadAkahuAccountsButton" class="button button-secondary" type="button">Load Akahu accounts</button>
+      <button id="saveKiwibankConnectionButton" class="button button-primary" type="button">Save mapping</button>`
+  });
+
+  document.querySelector("[data-close-dialog]")?.addEventListener("click", closeDialog);
+  document.getElementById("loadAkahuAccountsButton")?.addEventListener("click", event => loadAkahuAccountsIntoDialog(event.currentTarget, connection?.external_account_id || null));
+  document.getElementById("saveKiwibankConnectionButton")?.addEventListener("click", saveKiwibankConnection);
+}
+
+async function loadAkahuAccountsIntoDialog(button, selectedId = null) {
+  setButtonBusy(button, true, "Loading…");
+
+  try {
+    const result = await callKiwibankSync("listAccounts");
+    const accounts = result.accounts || [];
+    const select = document.getElementById("akahuAccountSelect");
+    const output = document.getElementById("akahuAccountLoadResult");
+
+    if (!accounts.length) {
+      select.innerHTML = '<option value="">No accounts returned</option>';
+      output.innerHTML = '<div class="inline-message warning">Akahu did not return any accounts. Confirm Kiwibank is connected in MyAkahu.</div>';
+      return;
+    }
+
+    select.innerHTML = `<option value="">Select the dojo account only</option>${accounts.map(account => `<option value="${escapeHtml(account.id)}" ${selectedId === account.id ? "selected" : ""}>${escapeHtml(account.name || "Kiwibank account")} · ${escapeHtml(account.masked_account_number || "Masked account")}${account.current_balance == null ? "" : ` · ${formatCurrency(account.current_balance)}`}</option>`).join("")}`;
+    output.innerHTML = `<div class="inline-message success">${accounts.length} masked Akahu account${accounts.length === 1 ? "" : "s"} loaded. Select the dojo account only.</div>`;
+  } catch (error) {
+    notifyError(error);
+  } finally {
+    setButtonBusy(button, false);
+  }
+}
+
+async function saveKiwibankConnection(event) {
+  const button = event.currentTarget;
+  const form = document.getElementById("kiwibankConnectionForm");
+  if (!form.reportValidity()) return;
+
+  const data = new FormData(form);
+  const accountText = document.getElementById("akahuAccountSelect")?.selectedOptions?.[0]?.textContent || "";
+
+  if (!window.confirm(`Confirm this is the dojo Kiwibank account only:\n\n${accountText}`)) return;
+
+  setButtonBusy(button, true, "Saving…");
+
+  try {
+    await callKiwibankSync("connectAccount", {
+      accountId: data.get("accountId"),
+      financialAccountId: data.get("financialAccountId"),
+      connectionName: normaliseText(data.get("connectionName")) || "Kiwibank Dojo Account"
+    });
+
+    closeDialog();
+    await refresh();
+    render(document.getElementById("moduleContent"));
+    notifySuccess("Kiwibank account mapping saved. No transactions have been imported yet.");
+  } catch (error) {
+    notifyError(error);
+  } finally {
+    setButtonBusy(button, false);
+  }
+}
+
+async function runKiwibankSync(lookbackDays, button) {
+  const connection = activeKiwibankConnection();
+  if (!connection) {
+    notifyError(new Error("Connect the dojo Kiwibank account before syncing."));
+    return;
+  }
+
+  const message = lookbackDays <= 7
+    ? "Run the first controlled 7-day test sync? Review every imported transaction before relying on the results."
+    : "Run a wider Kiwibank sync? Use this only after the 7-day test has been checked.";
+  if (!window.confirm(message)) return;
+
+  setButtonBusy(button, true, "Syncing…");
+
+  try {
+    const result = await callKiwibankSync("syncTransactions", {
+      connectionId: connection.id,
+      lookbackDays
+    });
+
+    await refresh();
+    render(document.getElementById("moduleContent"));
+
+    notifySuccess(`Kiwibank sync complete: ${result.transactions_inserted || 0} added, ${result.transactions_updated || 0} updated, ${result.duplicates_ignored || 0} duplicates ignored, ${result.review_required || 0} review items.`);
+    dispatchDataChanged({ module: "banking" });
+  } catch (error) {
+    notifyError(error);
+  } finally {
+    setButtonBusy(button, false);
+  }
+}
+
+async function disconnectKiwibankConnection(button) {
+  const connection = activeKiwibankConnection();
+  if (!connection) return;
+
+  if (!window.confirm("Disconnect the mapped Kiwibank account from the dojo app? Historical imported records will remain. Revoke access in MyAkahu as well if you want to fully remove consent.")) return;
+
+  setButtonBusy(button, true, "Disconnecting…");
+
+  try {
+    await callKiwibankSync("disconnectAccount", { connectionId: connection.id });
+    await refresh();
+    render(document.getElementById("moduleContent"));
+    notifySuccess("Kiwibank account disconnected in the dojo app. Revoke consent in MyAkahu if required.");
+  } catch (error) {
+    notifyError(error);
+  } finally {
+    setButtonBusy(button, false);
+  }
+}
+
 
 function accountOptions(selectedId = null) {
   return `<option value="">Select account</option>${state.accounts.map(item => `<option value="${item.id}" ${selectedId === item.id ? "selected" : ""}>${escapeHtml(item.account_nickname)}</option>`).join("")}`;

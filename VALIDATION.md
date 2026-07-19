@@ -1,22 +1,19 @@
-# Validation — v1.2.2
+# Validation — v1.3.0
 
 Completed before packaging:
 
-- Database preparation verification screenshot showed all PASS.
-- Edge Function source contains only secret variable names and no Akahu token values.
-- Patch contains no Kiwibank credentials, PINs, card details or authentication codes.
-- Patch does not include `config.js`.
-- JavaScript/TypeScript brace and import-path validation completed.
-- Function uses server-side Supabase service role only inside the Edge Function.
-- Function does not expose Akahu tokens in responses.
-- Function imports completed transactions into the existing banking tables and creates review suggestions.
-- CSV import remains unchanged.
+- JavaScript syntax check passed for every browser module.
+- `js/kiwibank-sync.js` uses Supabase Functions only and contains no token values.
+- `js/banking.js` preserves CSV import, matching rules and reconciliation.
+- The Kiwibank Sync panel only calls the Edge Function.
+- The service-worker cache version is `jka-dojo-manager-v1.3.0`.
+- `config.js` is excluded from the patch.
+- No Akahu token values, bank credentials or service-role key values are included.
+- The Edge Function duplicate-return source issue was corrected for redeployment.
 
-Live validation still required after deployment:
+Live validation still required:
 
-- Deploy function to Supabase.
-- Add secrets.
-- List Akahu accounts.
-- Connect only the dojo Kiwibank account.
-- Run a 7-day manual sync.
-- Compare imported transactions with Kiwibank.
+- Load Akahu accounts from the deployed app.
+- Map only the dojo Kiwibank account.
+- Run the 7-day controlled sync.
+- Compare imported records to Kiwibank.

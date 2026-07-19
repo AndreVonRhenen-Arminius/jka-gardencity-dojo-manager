@@ -1,4 +1,4 @@
-import { CONFIG, isConfigurationReady } from "./utilities.js?v=1.2.1";
+import { CONFIG, isConfigurationReady } from "./utilities.js?v=1.3.0";
 
 let client;
 

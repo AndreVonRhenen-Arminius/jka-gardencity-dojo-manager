@@ -1,4 +1,4 @@
-import { formatCurrency } from "./utilities.js?v=1.2.1";
+import { formatCurrency } from "./utilities.js?v=1.3.0";
 
 export const DEFAULT_FEE_SETTINGS = Object.freeze({
   weekly_fee: 20,

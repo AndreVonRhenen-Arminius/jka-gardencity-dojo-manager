@@ -1,4 +1,4 @@
-const CACHE_NAME = "jka-dojo-manager-v1.2.1";
+const CACHE_NAME = "jka-dojo-manager-v1.3.0";
 
 const APP_SHELL = [
   "./",
@@ -17,6 +17,7 @@ const APP_SHELL = [
   "./js/ui.js",
   "./js/modules.js",
   "./js/install.js",
+  "./js/kiwibank-sync.js",
   "./js/settings.js",
   "./js/families.js",
   "./js/students.js",

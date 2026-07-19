@@ -1,45 +1,61 @@
-# Setup Guide — Akahu Edge Function v1.2.2
+# Setup Guide — Akahu/Kiwibank Sync v1.3.0
 
-## Stage A — Apply this patch to the repository
+## Prerequisites
 
-1. Extract the ZIP.
-2. Upload the extracted contents to the root of the GitHub repository.
-3. Commit directly to `main`.
-4. Keep `config.js` unchanged.
+- Supabase database preparation has passed verification.
+- `kiwibank-sync` Edge Function exists.
+- Supabase secrets are set:
+  - `AKAHU_USER_ACCESS_TOKEN`
+  - `AKAHU_APP_ID_TOKEN`
+  - `DOJO_APP_ORIGIN`
+  - `DOJO_APP_PATH`
+  - `DOJO_OWNER_USER_ID`
+  - `DOJO_CRON_SECRET`
+- Kiwibank is connected in MyAkahu.
+- An encrypted dojo backup has been created.
 
-## Stage B — Deploy the Edge Function
+## GitHub Pages upload
 
-Run these commands from the local repository folder, not in Supabase SQL Editor:
+1. Extract the v1.3.0 patch ZIP.
+2. Open the GitHub repository.
+3. Upload everything inside the extracted folder.
+4. Commit directly to `main`.
+5. Wait for GitHub Pages deployment to finish.
+6. Open `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.3.0`.
+7. Press `Ctrl + F5`.
 
-```powershell
-supabase --version
-supabase login
-supabase link --project-ref ystfxuwuzbdecphovero
-supabase functions deploy kiwibank-sync --project-ref ystfxuwuzbdecphovero
-```
+## Edge Function redeploy
 
-## Stage C — Add non-token secrets first
-
-```powershell
-supabase secrets set DOJO_APP_ORIGIN=https://andrevonrhenen-arminius.github.io --project-ref ystfxuwuzbdecphovero
-supabase secrets set DOJO_APP_PATH=/jka-gardencity-dojo-manager/ --project-ref ystfxuwuzbdecphovero
-supabase secrets set DOJO_OWNER_USER_ID=<YOUR_SUPABASE_AUTH_USER_UUID> --project-ref ystfxuwuzbdecphovero
-supabase secrets set DOJO_CRON_SECRET=<GENERATE_A_LONG_RANDOM_VALUE> --project-ref ystfxuwuzbdecphovero
-```
-
-Do not set Akahu token secrets until the function is deployed and you are ready for account testing.
-
-## Stage D — Later Akahu token secrets
-
-After MyAkahu is prepared:
+From the local repository root, run:
 
 ```powershell
-supabase secrets set AKAHU_USER_ACCESS_TOKEN=<DO_NOT_SHARE> --project-ref ystfxuwuzbdecphovero
-supabase secrets set AKAHU_APP_ID_TOKEN=<DO_NOT_SHARE> --project-ref ystfxuwuzbdecphovero
+npx.cmd supabase functions deploy kiwibank-sync --project-ref ystfxuwuzbdecphovero
 ```
 
-Do not paste the token values into chat.
+Then verify:
 
-## Stage E — First sync rule
+```powershell
+npx.cmd supabase functions list --project-ref ystfxuwuzbdecphovero
+```
 
-The first live sync must be a 7-day lookback and review-first. Do not enable scheduled sync until manual matching has been validated.
+## Account mapping
+
+1. Open the app.
+2. Go to **Banking**.
+3. Select **Kiwibank Sync**.
+4. Select **Load Akahu accounts**.
+5. Select only the dojo Kiwibank account.
+6. Map it to the dojo financial account, for example `Kiwibank Dojo Account`.
+7. Save mapping.
+
+Do not map personal or household accounts.
+
+## Controlled test
+
+1. Create an encrypted backup.
+2. Run **7-day test sync**.
+3. Compare each imported transaction to Kiwibank.
+4. Confirm no personal transactions were imported.
+5. Confirm duplicates are ignored.
+6. Review possible matches and uncategorised items.
+7. Do not run a 30-day import until the 7-day test is correct.

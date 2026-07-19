@@ -1,9 +1,9 @@
-import { getSupabaseClient } from "./database.js?v=1.2.1";
-import { dispatchDataChanged, formatDate, normaliseText, nowIso, todayIso } from "./utilities.js?v=1.2.1";
+import { getSupabaseClient } from "./database.js?v=1.3.0";
+import { dispatchDataChanged, formatDate, normaliseText, nowIso, todayIso } from "./utilities.js?v=1.3.0";
 import {
   closeDialog, confirmAction, emptyState, escapeHtml, moduleHeader,
   notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge
-} from "./ui.js?v=1.2.1";
+} from "./ui.js?v=1.3.0";
 
 let state = { enquiries: [], tasks: [] };
 

@@ -1,45 +1,36 @@
-# Security — Akahu / Kiwibank Sync
+# Security — Akahu/Kiwibank Sync
 
-## Credentials
+## Protected data
 
-Do not put any of these in GitHub, chat, screenshots, `config.js`, browser JavaScript or app settings:
+The application must never store:
 
 - Kiwibank username
 - Kiwibank password
-- Kiwibank PIN
-- Card details
-- Authentication codes
-- Akahu User Access Token
-- Akahu App ID Token
-- Supabase service-role key
+- PIN
+- card number
+- card security code
+- authentication codes
+- Akahu token values in GitHub, browser JavaScript, `config.js`, screenshots or chat
 
-## Required Supabase secrets
+## Secrets
 
-These must be stored as Supabase Edge Function secrets:
+Akahu token values must be stored only as Supabase Edge Function secrets:
 
-```text
-AKAHU_USER_ACCESS_TOKEN
-AKAHU_APP_ID_TOKEN
-DOJO_OWNER_USER_ID
-DOJO_APP_ORIGIN
-DOJO_APP_PATH
-DOJO_CRON_SECRET
-```
+- `AKAHU_USER_ACCESS_TOKEN`
+- `AKAHU_APP_ID_TOKEN`
 
 ## Access controls
 
-The function checks:
+- Existing Microsoft sign-in remains required.
+- The Edge Function restricts access to `DOJO_OWNER_USER_ID`.
+- Browser code does not contain the Supabase service-role key.
+- Manual sync requires a signed-in authorised user.
+- Scheduled sync will require `DOJO_CRON_SECRET`.
 
-1. Exact app origin for browser requests.
-2. Valid signed-in Supabase user JWT for user actions.
-3. Supabase user ID equals `DOJO_OWNER_USER_ID`.
-4. User has authorised banking access in the dojo database.
-5. Akahu tokens are read only from server-side secrets.
+## Operational controls
 
-## Review-first policy
-
-This stage does not automatically mark fees as paid. Transactions are imported and suggestions are created for review.
-
-## Disconnect
-
-The app-level disconnect marks the dojo account mapping as disconnected. Revoke Akahu access separately in MyAkahu when required.
+- Map only the dojo Kiwibank account.
+- Start with a 7-day test.
+- Review uncertain matches.
+- Keep CSV import as a fallback.
+- Disconnect in the dojo app and revoke consent in MyAkahu if required.

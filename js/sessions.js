@@ -1,7 +1,7 @@
-import { getSupabaseClient } from "./database.js?v=1.2.1";
-import { dispatchDataChanged, formatDate, normaliseText, todayIso } from "./utilities.js?v=1.2.1";
-import { closeDialog, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.2.1";
-import { recalculateTermWeeks } from "./term-sync.js?v=1.2.1";
+import { getSupabaseClient } from "./database.js?v=1.3.0";
+import { dispatchDataChanged, formatDate, normaliseText, todayIso } from "./utilities.js?v=1.3.0";
+import { closeDialog, emptyState, escapeHtml, moduleHeader, notifyError, notifySuccess, openDialog, setButtonBusy, statusBadge } from "./ui.js?v=1.3.0";
+import { recalculateTermWeeks } from "./term-sync.js?v=1.3.0";
 
 let state = { sessions: [], terms: [], settings: {} };
 

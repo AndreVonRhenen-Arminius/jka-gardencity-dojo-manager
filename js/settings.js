@@ -1,11 +1,11 @@
-import { getSupabaseClient } from "./database.js?v=1.2.1";
-import { getCurrentSession } from "./auth.js?v=1.2.1";
+import { getSupabaseClient } from "./database.js?v=1.3.0";
+import { getCurrentSession } from "./auth.js?v=1.3.0";
 import {
   dispatchDataChanged,
   formatDateTime,
   normaliseText,
   parseMoney
-} from "./utilities.js?v=1.2.1";
+} from "./utilities.js?v=1.3.0";
 import {
   closeDialog,
   escapeHtml,
@@ -14,12 +14,12 @@ import {
   notifySuccess,
   openDialog,
   setButtonBusy
-} from "./ui.js?v=1.2.1";
-import { syncTermSessions } from "./term-sync.js?v=1.2.1";
+} from "./ui.js?v=1.3.0";
+import { syncTermSessions } from "./term-sync.js?v=1.3.0";
 import {
   DEFAULT_FEE_SETTINGS,
   DEFAULT_REFERRAL_RULES
-} from "./billing.js?v=1.2.1";
+} from "./billing.js?v=1.3.0";
 
 const keys = [
   "dojo.profile",

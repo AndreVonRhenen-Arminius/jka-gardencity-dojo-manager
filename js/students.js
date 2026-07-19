@@ -1,4 +1,4 @@
-import { getSupabaseClient } from "./database.js?v=1.2.1";
+import { getSupabaseClient } from "./database.js?v=1.3.0";
 import {
   calculateAge,
   dispatchDataChanged,
@@ -6,7 +6,7 @@ import {
   normaliseText,
   nowIso,
   todayIso
-} from "./utilities.js?v=1.2.1";
+} from "./utilities.js?v=1.3.0";
 import {
   closeDialog,
   confirmAction,
@@ -18,8 +18,8 @@ import {
   openDialog,
   setButtonBusy,
   statusBadge
-} from "./ui.js?v=1.2.1";
-import { openStudentRecords } from "./student-records.js?v=1.2.1";
+} from "./ui.js?v=1.3.0";
+import { openStudentRecords } from "./student-records.js?v=1.3.0";
 import {
   DEFAULT_FEE_SETTINGS,
   DEFAULT_REFERRAL_RULES,
@@ -30,7 +30,7 @@ import {
   referralDefaults,
   referralSummary,
   serializeBillingNotes
-} from "./billing.js?v=1.2.1";
+} from "./billing.js?v=1.3.0";
 
 let state = {
   students: [],

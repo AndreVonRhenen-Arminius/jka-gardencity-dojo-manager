@@ -1,42 +1,33 @@
-# Upgrade Instructions — v1.2.1
+# Patch Instructions — v1.3.0
 
-This patch corrects Tuesday and Thursday session dates that were displayed
-one day late.
+This patch adds the Kiwibank Sync account-mapping UI and updates the Edge Function source.
 
-## Cause
-
-The database already stored the correct dates. The browser formatter treated a
-date-only value as a UTC time and then converted it to New Zealand time. That
-moved Tuesday to Wednesday and Thursday to Friday on screen.
-
-## Important
-
-- Do not delete or regenerate existing sessions.
-- No SQL needs to be run.
-- The ZIP does not contain `config.js`.
-- Your Supabase key and Microsoft login settings remain unchanged.
-
-## Upload
+## Upload to GitHub
 
 1. Extract the ZIP.
-2. Open the GitHub repository `jka-gardencity-dojo-manager`.
-3. Select **Add file → Upload files**.
-4. Upload everything inside the extracted folder.
-5. Use commit message:
+2. Upload all extracted files and folders to the repository root.
+3. Commit message:
 
-   `Fix Tuesday and Thursday session dates v1.2.1`
+   `Add Kiwibank Sync account mapping v1.3.0`
 
-6. Commit directly to `main`.
-7. Wait for the GitHub Pages deployment to show a green tick.
+4. Wait for GitHub Pages deployment.
 
-## Open the corrected version
+## Redeploy Edge Function
 
-1. Close all browser tabs and installed Dojo Manager windows.
-2. Open:
+From the repository root:
 
-   `https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.2.1`
+```powershell
+npx.cmd supabase functions deploy kiwibank-sync --project-ref ystfxuwuzbdecphovero
+```
 
-3. Press `Ctrl + F5`.
-4. Confirm the bottom-left corner shows `Version 1.2.1`.
-5. Open **Sessions** and **Attendance**.
-6. Confirm the generated dates display on Tuesdays and Thursdays.
+## Open app
+
+```text
+https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.3.0
+```
+
+Press `Ctrl + F5`.
+
+## Use
+
+Open **Banking → Kiwibank Sync**, load Akahu accounts, select only the dojo Kiwibank account, save mapping, then run the 7-day test sync.
