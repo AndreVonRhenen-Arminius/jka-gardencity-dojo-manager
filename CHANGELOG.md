@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.3.2 — Receipt instructor-name correction
+
+- Prevented the receipt and invoice contact block from displaying the instructor name twice when the saved instructor title already includes the full name.
+- The contact block now displays `Sensei André Von Rhenen` once.
+- Updated browser cache-busting references and the service-worker cache version so GitHub Pages clients receive the corrected receipt template.
+- No database migration or Supabase Edge Function deployment is required.
+
 ## 1.3.1 — Akahu cursor pagination fix
 
 - Fixed Akahu transaction pagination when the API response includes cursor metadata as an object.

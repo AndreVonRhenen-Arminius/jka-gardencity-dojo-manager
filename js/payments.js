@@ -439,7 +439,17 @@ function dojoContactBlock(dojo) {
     dojo.country
   ].filter(Boolean).map(escapeHtml).join(", ");
   const contact = [dojo.email, dojo.phone].filter(Boolean).map(escapeHtml).join(" · ");
-  return `<strong>${escapeHtml(dojo.dojo_name || "JKA Christchurch – GardenCity")}</strong><br>${escapeHtml([dojo.instructor_title, dojo.instructor_name || "André Von Rhenen"].filter(Boolean).join(" "))}${dojo.affiliation ? `<br>${escapeHtml(dojo.affiliation)}` : ""}${address ? `<br>${address}` : dojo.location ? `<br>${escapeHtml(dojo.location)}` : ""}${contact ? `<br>${contact}` : ""}`;
+  const instructorName = normaliseText(dojo.instructor_name || "André Von Rhenen");
+  const instructorTitle = normaliseText(dojo.instructor_title || "Sensei");
+  const titleLower = instructorTitle.toLocaleLowerCase("en-NZ");
+  const nameLower = instructorName.toLocaleLowerCase("en-NZ");
+  const instructorDisplay = titleLower.includes(nameLower)
+    ? instructorTitle
+    : nameLower.startsWith(`${titleLower} `)
+      ? instructorName
+      : [instructorTitle, instructorName].filter(Boolean).join(" ");
+
+  return `<strong>${escapeHtml(dojo.dojo_name || "JKA Christchurch – GardenCity")}</strong><br>${escapeHtml(instructorDisplay)}${dojo.affiliation ? `<br>${escapeHtml(dojo.affiliation)}` : ""}${address ? `<br>${address}` : dojo.location ? `<br>${escapeHtml(dojo.location)}` : ""}${contact ? `<br>${contact}` : ""}`;
 }
 
 function printInvoice(body) {

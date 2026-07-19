@@ -5,7 +5,7 @@ import { activateNavigation, initialiseNavigation } from "./navigation.js?v=1.3.
 import { registerServiceWorker } from "./pwa-updates.js?v=1.3.0";
 import { initialiseInstallExperience } from "./install.js?v=1.3.0";
 import { initialiseDialog } from "./ui.js?v=1.3.0";
-import { loadModule } from "./modules.js?v=1.3.0";
+import { loadModule } from "./modules.js?v=1.3.2";
 import { getSupabaseClient } from "./database.js?v=1.3.0";
 
 const BUILD_VERSION = "1.3.0";
