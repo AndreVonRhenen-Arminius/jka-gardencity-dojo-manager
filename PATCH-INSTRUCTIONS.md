@@ -1,33 +1,39 @@
-# Patch Instructions — v1.3.0
+# Patch Instructions — v1.3.1
 
-This patch adds the Kiwibank Sync account-mapping UI and updates the Edge Function source.
+This patch fixes the Akahu `Invalid cursor` error during transaction sync.
 
 ## Upload to GitHub
 
-1. Extract the ZIP.
-2. Upload all extracted files and folders to the repository root.
-3. Commit message:
+1. Extract `JKA-Dojo-Akahu-Cursor-Fix-v1.3.1.zip`.
+2. Open the GitHub repository `jka-gardencity-dojo-manager`.
+3. Select **Add file → Upload files**.
+4. Upload everything inside the extracted patch folder.
+5. Use commit message:
 
-   `Add Kiwibank Sync account mapping v1.3.0`
+   `Fix Akahu cursor pagination v1.3.1`
 
-4. Wait for GitHub Pages deployment.
+6. Commit directly to `main`.
 
-## Redeploy Edge Function
+## Redeploy the Edge Function
 
-From the repository root:
+From the local repository folder, run:
 
 ```powershell
 npx.cmd supabase functions deploy kiwibank-sync --project-ref ystfxuwuzbdecphovero
 ```
 
-## Open app
+Then confirm:
 
-```text
-https://andrevonrhenen-arminius.github.io/jka-gardencity-dojo-manager/?v=1.3.0
+```powershell
+npx.cmd supabase functions list --project-ref ystfxuwuzbdecphovero
 ```
 
-Press `Ctrl + F5`.
+The function should show `kiwibank-sync | ACTIVE`, with an increased version number.
 
-## Use
+## Test
 
-Open **Banking → Kiwibank Sync**, load Akahu accounts, select only the dojo Kiwibank account, save mapping, then run the 7-day test sync.
+1. Open the app.
+2. Go to **Banking → Kiwibank Sync**.
+3. Run only the **7-day test sync**.
+4. Check the sync summary and review queue.
+5. Do not run the 30-day sync until the 7-day result is correct.

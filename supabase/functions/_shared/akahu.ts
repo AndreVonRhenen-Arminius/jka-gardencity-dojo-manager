@@ -85,7 +85,30 @@ export function extractItems(body: any): any[] {
 }
 
 export function extractNextCursor(body: any): string | undefined {
-  return body?.cursor?.next || body?.cursor || body?.next_cursor || body?.nextCursor || undefined;
+  // Akahu returns a cursor only when more result pages are available.
+  // Some responses expose cursor metadata as an object. The previous version
+  // could pass that object back to Akahu as "[object Object]", causing
+  // HTTP 400 "Invalid cursor" on the second page request.
+  const candidates = [
+    body?.cursor?.next,
+    body?.cursor?.after,
+    body?.next_cursor,
+    body?.nextCursor,
+    body?.pagination?.next,
+    body?.paging?.next
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
+  if (typeof body?.cursor === "string" && body.cursor.trim()) {
+    return body.cursor.trim();
+  }
+
+  return undefined;
 }
 
 export function maskAccount(account: any): Record<string, unknown> {

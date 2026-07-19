@@ -1,19 +1,18 @@
-# Validation — v1.3.0
+# Validation — v1.3.1
 
 Completed before packaging:
 
-- JavaScript syntax check passed for every browser module.
-- `js/kiwibank-sync.js` uses Supabase Functions only and contains no token values.
-- `js/banking.js` preserves CSV import, matching rules and reconciliation.
-- The Kiwibank Sync panel only calls the Edge Function.
-- The service-worker cache version is `jka-dojo-manager-v1.3.0`.
-- `config.js` is excluded from the patch.
-- No Akahu token values, bank credentials or service-role key values are included.
-- The Edge Function duplicate-return source issue was corrected for redeployment.
+- Confirmed the logged failure was `Akahu API request failed ... Invalid cursor`.
+- Located the cursor parser in `supabase/functions/_shared/akahu.ts`.
+- Updated cursor handling so only non-empty strings are sent back as the `cursor` query parameter.
+- Prevented cursor objects from being converted to `[object Object]`.
+- Added safer provider-error detail storage for future diagnostics.
+- Confirmed the patch contains no `config.js`.
+- Confirmed the patch contains no Akahu token values, Kiwibank credentials or Supabase service-role key values.
 
-Live validation still required:
+Live validation required after deployment:
 
-- Load Akahu accounts from the deployed app.
-- Map only the dojo Kiwibank account.
-- Run the 7-day controlled sync.
-- Compare imported records to Kiwibank.
+- Run the 7-day test sync.
+- Confirm the error no longer appears.
+- Confirm transactions import only from the mapped dojo account.
+- Review all suggestions before expanding the lookback period.

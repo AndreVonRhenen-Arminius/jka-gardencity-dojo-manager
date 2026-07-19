@@ -1,23 +1,15 @@
 # Change Log
 
-## 1.3.0 — Kiwibank Sync account mapping UI
+## 1.3.1 — Akahu cursor pagination fix
 
-- Added a Banking → Kiwibank Sync panel.
-- Added server-side Akahu account loading through the `kiwibank-sync` Edge Function.
-- Added account mapping from one selected Akahu/Kiwibank account to one dojo financial account.
-- Added 7-day controlled test sync and 30-day manual sync buttons.
-- Added disconnect control for the mapped account.
-- Added Kiwibank review queue display for possible matches, uncategorised items and transfers.
-- Preserved Kiwibank CSV import as a fallback.
-- Updated the Edge Function source to remove a duplicate return statement before redeployment.
-- Updated service-worker cache to version 1.3.0.
-- No Akahu token values, Kiwibank credentials or Supabase service-role keys are included.
+- Fixed Akahu transaction pagination when the API response includes cursor metadata as an object.
+- Prevents the Edge Function from sending an invalid cursor value back to Akahu.
+- Fixes the observed sync error: `Akahu API request failed ... Invalid cursor`.
+- Stores safer, more specific provider error details in `bank_sync_runs.error_message` without exposing tokens.
+- No database migration is required.
+- No browser configuration, Akahu token, Kiwibank credential or `config.js` value is included.
 
-## 1.2.2 — Akahu Edge Function foundation
+## 1.3.0 — Akahu account mapping UI
 
-- Added server-side Supabase Edge Function files for Akahu bank sync.
-- Added project documentation for bank-sync setup.
-
-## 1.2.1 — Tuesday and Thursday calendar-date correction
-
-- Corrected date-only display throughout the app.
+- Added Banking → Kiwibank Sync panel.
+- Added account loading, mapping, manual test sync and review queue display.

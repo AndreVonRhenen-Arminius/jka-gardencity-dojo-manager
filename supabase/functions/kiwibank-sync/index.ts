@@ -56,6 +56,24 @@ Deno.serve(async (req: Request) => {
   }
 });
 
+
+function safeErrorMessage(error: unknown): string {
+  if (error instanceof HttpError) {
+    const details = error.details as Record<string, unknown> | undefined;
+    const detailParts: string[] = [];
+
+    if (details?.path) detailParts.push(`path=${String(details.path)}`);
+    if (details?.status) detailParts.push(`provider_status=${String(details.status)}`);
+    if (details?.message) detailParts.push(`provider_message=${String(details.message)}`);
+
+    return detailParts.length
+      ? `${error.message} (${detailParts.join("; ")})`
+      : error.message;
+  }
+
+  return error instanceof Error ? error.message : String(error);
+}
+
 function requireUserMode(auth: AuthContext): void {
   if (auth.mode !== "user") {
     throw new HttpError(403, "This action requires a signed-in dojo administrator.");
@@ -405,7 +423,7 @@ async function syncTransactions(auth: AuthContext, body: RequestBody) {
         possible_matches: possibleMatches,
         uncategorised_count: uncategorised,
         transfers_detected: transfers,
-        error_message: error instanceof Error ? error.message : String(error)
+        error_message: safeErrorMessage(error)
       })
       .eq("id", run.id);
     throw error;
