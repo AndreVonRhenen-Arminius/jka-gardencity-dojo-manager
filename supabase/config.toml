@@ -1,0 +1,4 @@
+project_id = "ystfxuwuzbdecphovero"
+
+[functions.kiwibank-sync]
+verify_jwt = false

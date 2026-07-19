@@ -1,0 +1,21 @@
+-- JKA GardenCity Dojo Manager
+-- Akahu/Kiwibank bank-sync database preparation
+-- Version: 0.7.0
+--
+-- This migration has been applied manually in Supabase SQL Editor.
+-- It is retained in the repository as the permanent database record.
+--
+-- Applied objects:
+-- - public.current_dojo_user_has_bank_sync_access()
+-- - public.bank_connections
+-- - public.bank_sync_runs
+-- - public.bank_match_suggestions
+-- - Akahu metadata columns on public.bank_transactions
+-- - Extended matching-rule columns on public.matching_rules
+-- - public.bank_sync_connection_status view
+-- - RLS policies and authenticated grants for the new bank-sync tables
+-- - public.schema_versions row: 0.7.0
+--
+-- Verification query result supplied by the operator: all PASS.
+-- Do not rerun this placeholder file. Use the SQL Editor history entry
+-- "09 - Akahu Bank Sync Database Prep" as the authoritative applied SQL.

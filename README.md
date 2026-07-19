@@ -1,12 +1,30 @@
-# JKA GardenCity Dojo Manager — v1.2.1
+# JKA GardenCity Dojo Manager — Akahu Edge Function Patch v1.2.2
 
-This maintenance update corrects date-only display throughout the app.
+This patch adds the Supabase Edge Function structure for secure read-only Akahu/Kiwibank synchronisation.
 
-The database sessions were generated on the correct Tuesday and Thursday dates.
-The previous interface converted those calendar dates through the
-Pacific/Auckland timezone, which displayed them one day later.
+## Included
 
-Version 1.2.1 treats database `date` values as calendar dates. Existing records
-are retained and immediately display on the correct weekday after deployment.
+- `supabase/functions/kiwibank-sync/index.ts`
+- Shared CORS, auth, Akahu and matching helpers
+- `supabase/config.toml`
+- Bank-sync setup and security documentation
+- Database migration record file for `supabase/07-akahu-bank-sync.sql`
 
-The patch excludes `config.js` and requires no SQL.
+## Not included
+
+- No Akahu tokens
+- No Kiwibank credentials
+- No Supabase service-role key in browser code
+- No change to `config.js`
+- No front-end UI changes yet
+- No automatic scheduled sync yet
+
+## Function actions
+
+- `status`
+- `listAccounts`
+- `connectAccount`
+- `syncTransactions`
+- `disconnectAccount`
+
+The function uses review-first matching. It creates suggestions and does not automatically mark student fees as paid in this stage.

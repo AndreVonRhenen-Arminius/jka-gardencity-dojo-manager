@@ -1,18 +1,17 @@
 # Change Log
 
-## 1.2.1 — Tuesday and Thursday calendar-date correction
+## 1.2.2 — Akahu Edge Function foundation
 
-- Corrected the one-day display shift affecting PostgreSQL `date` fields.
-- Tuesday sessions now display as Tuesday.
-- Thursday sessions now display as Thursday.
-- Existing session records do not need to be deleted or regenerated.
-- Corrected date display throughout Attendance, Sessions, Terms, Banking,
-  Fees, Payments, Invoices, Gradings, Progress, Reports and other date-only views.
-- Updated the service-worker cache to version 1.2.1.
-- Preserved Student Hub, family deletion, term synchronisation, billing rules,
-  referral rewards and Microsoft login configuration.
+- Added Supabase Edge Function source for `kiwibank-sync`.
+- Added explicit request-origin validation.
+- Added signed-in Supabase user validation.
+- Restricted bank-sync calls to the configured owner user ID.
+- Added banking-access confirmation through the existing authorised-user and role model.
+- Added Akahu account listing, account connection, manual sync, status and disconnect actions.
+- Added review-first transaction import logic.
+- Added duplicate checks using Akahu transaction ID and transaction fingerprint.
+- Added safe match suggestions for student payments, expenses, transfers and uncategorised transactions.
+- Added Supabase config for the function.
+- Added setup, security and validation documentation.
 
-## 1.2.0 — Settings, term synchronisation and student billing
-
-- Added complete dojo settings, term dates, automatic session generation,
-  payment weeks, student billing overrides and referral rewards.
+No tokens or credentials are included.
